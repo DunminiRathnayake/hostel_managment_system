@@ -1,0 +1,116 @@
+/* Global Unified Theme Overrides */
+:root {
+  --primary-color: #1e1b4b; /* Dark purple/blue base */
+  --primary-hover: #312e81;
+  --secondary-color: #6366f1; /* Vibrant accent */
+  --success-color: #10b981;
+  --warning-color: #fbbf24;
+  --error-color: #ef4444;
+  --bg-color: #f8fafc;
+  --card-bg: #ffffff;
+}
+
+body {
+  background-color: var(--bg-color);
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #1e293b;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Universal Layout Container bounds Navbar naturally */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+}
+
+/* Unified Typography Overrides */
+h1, h2, h3, h4 {
+  color: var(--primary-color);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* Global Hardware Kiosk Card System */
+.global-card {
+  background: var(--card-bg);
+  border-radius: 20px;
+  padding: 2.5rem;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.06);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+  border: 1px solid #f1f5f9;
+}
+
+.global-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.15);
+}
+
+/* Global Hardware Inputs */
+.global-input {
+    width: 100%;
+    padding: 0.9rem 1.2rem;
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+    transition: border-color 0.2s;
+    outline: none;
+    font-size: 1rem;
+}
+
+.global-input:focus {
+    border-color: var(--secondary-color);
+}
+
+/* Global Unified Button System */
+.global-btn {
+  background: linear-gradient(135deg, var(--primary-hover), var(--secondary-color));
+  color: white;
+  border: none;
+  border-radius: 9999px; /* Pill shaped naturally */
+  padding: 0.8rem 2rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 15px -3px rgba(99, 102, 241, 0.4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.global-btn:hover {
+  transform: scale(1.06);
+  box-shadow: 0 12px 20px -5px rgba(99, 102, 241, 0.6);
+}
+
+.global-btn-outline {
+  background: transparent;
+  color: var(--primary-color);
+  border: 2px solid #cbd5e1;
+  box-shadow: none;
+}
+
+.global-btn-outline:hover {
+  background: var(--bg-color);
+  border-color: var(--secondary-color);
+  color: var(--secondary-color);
+  transform: scale(1.06);
+}
+
+/* Animation utility traces */
+.fade-in-up {
+    animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}

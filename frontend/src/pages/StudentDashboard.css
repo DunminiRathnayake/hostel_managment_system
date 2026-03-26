@@ -1,0 +1,40 @@
+/* Shares root formatting logic with WardenDashboard natively */
+.student-sidebar {
+    background: #1e1b4b; /* Unique deeper purple styling */
+}
+
+.student-sidebar .active {
+    background: rgba(167, 139, 250, 0.15) !important;
+    color: #a78bfa !important;
+    border-left: 4px solid #8b5cf6 !important;
+}
+
+.form-group-alt {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0.5rem;
+}
+
+.form-group-alt label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+    color: #475569;
+}
+
+.form-group-alt input, .form-group-alt select, .form-group-alt textarea {
+    padding: 0.85rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: #1e293b;
+    transition: all 0.2s;
+    background: #f8fafc;
+}
+
+.form-group-alt input:focus, .form-group-alt select:focus, .form-group-alt textarea:focus {
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    outline: none;
+    background: white;
+}

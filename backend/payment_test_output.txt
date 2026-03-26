@@ -1,0 +1,26 @@
+--- STARTING PAYMENT API TESTS ---
+
+✅ PASSED: POST /payments missing fields -> 400
+✅ PASSED: POST /payments category "other" no description -> 400
+✅ PASSED: POST /payments invalid file type -> 400
+✅ PASSED: POST /payments valid -> 201 & status pending
+✅ PASSED: Multer file path stored correctly in DB
+✅ PASSED: GET /payments/my -> 200 and valid array
+✅ PASSED: GET /payments (Warden) -> 200 + student population
+✅ PASSED: GET /payments (Student) -> blocked 403
+✅ PASSED: GET /payments/my without JWT -> blocked 401
+✅ PASSED: PUT /payments/:id (Student) -> blocked 403
+✅ PASSED: PUT /payments/:id (Warden) -> 200 and mapped approved target
+
+--- FINAL SUMMARY ---
+✅ POST /payments missing fields -> 400
+✅ POST /payments category "other" no description -> 400
+✅ POST /payments invalid file type -> 400
+✅ POST /payments valid -> 201 & status pending
+✅ Multer file path stored correctly in DB
+✅ GET /payments/my -> 200 and valid array
+✅ GET /payments (Warden) -> 200 + student population
+✅ GET /payments (Student) -> blocked 403
+✅ GET /payments/my without JWT -> blocked 401
+✅ PUT /payments/:id (Student) -> blocked 403
+✅ PUT /payments/:id (Warden) -> 200 and mapped approved target

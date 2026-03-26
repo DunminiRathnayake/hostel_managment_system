@@ -1,0 +1,12 @@
+--- STARTING QR ATTENDANCE API TESTS ---
+
+✅ PASSED: POST /scan invalid JWT payload -> 401 Authorization Catch
+✅ PASSED: POST /scan (Check-In) -> 201 Creating unique open session
+✅ PASSED: POST /scan (Midnight Crossing Check-Out) -> 200 Properly targeting single active session closing it off without duplicates
+✅ PASSED: POST /scan (Re-Entry Check-In) -> 201 Generated fresh session cleanly post-checkout
+
+--- FINAL SUMMARY ---
+✅ POST /scan invalid JWT payload -> 401 Authorization Catch
+✅ POST /scan (Check-In) -> 201 Creating unique open session
+✅ POST /scan (Midnight Crossing Check-Out) -> 200 Properly targeting single active session closing it off without duplicates
+✅ POST /scan (Re-Entry Check-In) -> 201 Generated fresh session cleanly post-checkout
