@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axiosInstance from '../../api/axios';
+import axiosInstance, { API_BASE_URL } from '../../api/axios';
 
 const GalleryPanel = () => {
     const [images, setImages] = useState([]);
@@ -85,7 +85,7 @@ const GalleryPanel = () => {
                         {images.map(img => (
                             <tr key={img._id}>
                                 <td>
-                                    <img src={`http://localhost:5000${img.url}`} alt={img.title} style={{ width: '100px', height: '60px', objectFit: 'cover', borderRadius: '4px' }} />
+                                    <img src={`${API_BASE_URL}${img.url}`} alt={img.title} style={{ width: '100px', height: '60px', objectFit: 'cover', borderRadius: '4px' }} />
                                 </td>
                                 <td>{img.title}</td>
                                 <td>{new Date(img.createdAt).toLocaleDateString()}</td>

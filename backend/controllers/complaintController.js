@@ -1,5 +1,6 @@
 const Complaint = require('../models/Complaint');
 const Allocation = require('../models/Allocation');
+const Profile = require('../models/Profile');
 
 // @route   POST /api/complaints
 // @desc    Submit a new complaint
@@ -53,10 +54,21 @@ exports.getMyComplaints = async (req, res) => {
 // @access  Private/Warden
 exports.getAllComplaints = async (req, res) => {
     try {
-        const complaints = await Complaint.find({})
-            .populate('studentId', 'name email')
+        const complaintsRaw = await Complaint.find({})
+            .populate('studentId', 'email')
             .populate('roomId', 'roomNumber')
             .sort({ createdAt: -1 });
+
+        const validComplaints = complaintsRaw.filter(c => c.studentId !== null);
+
+        const complaints = await Promise.all(validComplaints.map(async (c) => {
+            const profile = await Profile.findOne({ user: c.studentId._id });
+            const cObj = c.toObject();
+            if (cObj.studentId) {
+                cObj.studentId.name = profile ? profile.name : 'Unknown Student';
+            }
+            return cObj;
+        }));
 
         res.status(200).json({ complaints });
     } catch (error) {
@@ -89,5 +101,21 @@ exports.updateComplaintStatus = async (req, res) => {
     } catch (error) {
         console.error('Error updating complaint status:', error);
         res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// @route   DELETE /api/complaints/:id
+// @desc    Delete a complaint completely
+// @access  Private/Warden
+exports.deleteComplaint = async (req, res) => {
+    try {
+        const complaint = await Complaint.findByIdAndDelete(req.params.id);
+        if (!complaint) {
+            return res.status(404).json({ message: 'Complaint document not found' });
+        }
+        res.status(200).json({ message: 'Complaint successfully permanently purged' });
+    } catch (error) {
+        console.error('Error deleting complaint document:', error);
+        res.status(500).json({ message: 'Internal logic crash deleting structural element' });
     }
 };

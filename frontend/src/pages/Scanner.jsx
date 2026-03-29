@@ -18,6 +18,7 @@ const Scanner = () => {
 
     // Manual Testing State
     const [manualStudentId, setManualStudentId] = useState('');
+    const [showAdminMode, setShowAdminMode] = useState(false);
 
     const playSoundEffect = (type) => {
         try {
@@ -99,8 +100,14 @@ const Scanner = () => {
             const actionString = isCheckOut ? 'Check-out' : 'Check-in';
             const executionState = isLate ? 'late' : 'success';
             const icon = isLate ? '⚠' : '✔';
-            const title = `Done! ${actionString} complete`;
-            const sub = isLate ? `${studentName} - LATE ENTRY DETECTED` : studentName;
+            
+            let title = `${actionString.toUpperCase()} SUCCESS`;
+            let sub = studentName;
+
+            if (isLate) {
+                title = "LATE ENTRY";
+                sub = `${studentName} flagged past curfew`;
+            }
 
             triggerOverlay(executionState, title, sub, icon);
 
@@ -115,11 +122,16 @@ const Scanner = () => {
             setRecentScans(prev => [trace, ...prev].slice(0, 5));
 
         } catch (err) {
+            if (err.response?.status === 400 && err.response?.data?.message?.includes('wait')) {
+                triggerOverlay('late', 'COOLDOWN ACTIVE', err.response.data.message, '⏳');
+                return;
+            }
+
             const errorText = err.response?.status === 401
                 ? "Invalid or expired QR Authorization"
                 : err.response?.data?.message || 'Invalid QR Code / Server Error';
 
-            triggerOverlay('error', 'Something went wrong', errorText, '❌');
+            triggerOverlay('error', 'INVALID QR', errorText, '❌');
         }
     };
 
@@ -210,8 +222,8 @@ const Scanner = () => {
     return (
         <div className="scanner-fullscreen-kiosk">
             <div className="kiosk-header">
-                <h1 className="kiosk-title">Automated Check-in Kiosk</h1>
-                <p className="kiosk-subtitle">Show your Student ID Code to the camera</p>
+                <h1 className="kiosk-title">Hostel Entry Scanner</h1>
+                <p className="kiosk-subtitle">Scan student QR to check-in/out</p>
             </div>
 
             <div className="kiosk-body">
@@ -246,22 +258,31 @@ const Scanner = () => {
                         </div>
                     )}
 
-                    <div className="kiosk-manual-test">
-                        <label style={{ fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold', letterSpacing: '0.05em' }}>Manual Token Mode</label>
-                        <form onSubmit={handleManualSubmit} style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                            <input
-                                type="text"
-                                placeholder="Secure Auth Token"
-                                required
-                                value={manualStudentId}
-                                onChange={(e) => setManualStudentId(e.target.value)}
-                                style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', background: 'transparent', border: '1px solid #475569', color: 'white', outline: 'none' }}
-                            />
-                            <button type="submit" disabled={status !== 'idle'} style={{ padding: '0.8rem 1rem', borderRadius: '8px', background: '#ec4899', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>
-                                Connect
-                            </button>
-                        </form>
+                    {/* Admin Mode Toggle */}
+                    <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+                        <button onClick={() => setShowAdminMode(!showAdminMode)} style={{ background: 'transparent', border: '1px solid #334155', color: '#64748b', padding: '0.4rem 0.8rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            {showAdminMode ? 'Close Admin Mode' : 'Admin Mode'}
+                        </button>
                     </div>
+
+                    {showAdminMode && (
+                        <div className="kiosk-manual-test fade-in-up">
+                            <label style={{ fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold', letterSpacing: '0.05em' }}>Manual Token Mode</label>
+                            <form onSubmit={handleManualSubmit} style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                <input
+                                    type="text"
+                                    placeholder="Secure Auth Token"
+                                    required
+                                    value={manualStudentId}
+                                    onChange={(e) => setManualStudentId(e.target.value)}
+                                    style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid #475569', color: 'white', outline: 'none' }}
+                                />
+                                <button type="submit" disabled={status !== 'idle'} style={{ padding: '0.8rem 1rem', borderRadius: '8px', background: '#ec4899', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>
+                                    Connect
+                                </button>
+                            </form>
+                        </div>
+                    )}
                 </div>
 
                 {recentScans.length > 0 && (

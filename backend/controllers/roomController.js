@@ -156,3 +156,28 @@ exports.updateRoomStatus = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+// @route   PUT /api/rooms/:id
+// @desc    Update core room details
+// @access  Private/Warden
+exports.editRoom = async (req, res) => {
+    try {
+        const { roomNumber, capacity, type } = req.body;
+        
+        // Prevent capacity from explicitly being mapped lower than current residents safely
+        const room = await Room.findById(req.params.id);
+        if (!room) return res.status(404).json({ message: 'Target room configuration lost.' });
+        if (capacity < room.currentOccupancy) {
+            return res.status(400).json({ message: 'Cannot set capacity strictly beneath current exact occupancy limit.' });
+        }
+
+        const updateData = { roomNumber, capacity, type };
+        const updatedRoom = await Room.findByIdAndUpdate(req.params.id, updateData, { new: true });
+        
+        res.status(200).json({ message: 'Room configuration updated', room: updatedRoom });
+    } catch (error) {
+        if (error.code === 11000) return res.status(400).json({ message: 'Room number already structurally exists.' });
+        console.error('Error modifying room payload:', error);
+        res.status(500).json({ message: 'Internal logic error editing framework.' });
+    }
+};

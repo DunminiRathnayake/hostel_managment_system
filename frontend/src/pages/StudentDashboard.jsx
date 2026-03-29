@@ -7,11 +7,12 @@ import StudentComplaintsPanel from '../components/student/StudentComplaintsPanel
 import StudentCheckInsPanel from '../components/student/StudentCheckInsPanel';
 import StudentQRPanel from '../components/student/StudentQRPanel';
 import StudentCleaningPanel from '../components/student/StudentCleaningPanel';
+import StudentOverviewPanel from '../components/student/StudentOverviewPanel';
 import './StudentDashboard.css';
 
 const StudentDashboard = () => {
     const { logout, user } = useContext(AuthContext);
-    const [activeTab, setActiveTab] = useState('profile');
+    const [activeTab, setActiveTab] = useState('dashboard');
     const navigate = useNavigate();
 
     const handleLogout = () => {
@@ -21,13 +22,13 @@ const StudentDashboard = () => {
 
     const renderContent = () => {
         switch (activeTab) {
-            case 'profile': return <ProfilePanel />;
+            case 'dashboard': return <StudentOverviewPanel setActiveTab={setActiveTab} />;
+            case 'room': return <ProfilePanel />;
             case 'payments': return <StudentPaymentsPanel />;
             case 'complaints': return <StudentComplaintsPanel />;
-            case 'qrcode': return <StudentQRPanel />;
-            case 'checkins': return <StudentCheckInsPanel />;
             case 'cleaning': return <StudentCleaningPanel />;
-            default: return <ProfilePanel />;
+            case 'qrcode': return <StudentQRPanel />;
+            default: return <StudentOverviewPanel setActiveTab={setActiveTab} />;
         }
     };
 
@@ -39,12 +40,12 @@ const StudentDashboard = () => {
                     <p className="user-badge">{user?.name}</p>
                 </div>
                 <nav className="sidebar-nav">
-                    <button className={activeTab === 'profile' ? 'active' : ''} onClick={() => setActiveTab('profile')}>My Profile</button>
-                    <button className={activeTab === 'payments' ? 'active' : ''} onClick={() => setActiveTab('payments')}>My Payments</button>
-                    <button className={activeTab === 'qrcode' ? 'active' : ''} onClick={() => setActiveTab('qrcode')}>My QR Code</button>
+                    <button className={activeTab === 'dashboard' ? 'active' : ''} onClick={() => setActiveTab('dashboard')}>Dashboard</button>
+                    <button className={activeTab === 'room' ? 'active' : ''} onClick={() => setActiveTab('room')}>My Profile</button>
+                    <button className={activeTab === 'payments' ? 'active' : ''} onClick={() => setActiveTab('payments')}>Payments</button>
                     <button className={activeTab === 'complaints' ? 'active' : ''} onClick={() => setActiveTab('complaints')}>Complaints</button>
-                    <button className={activeTab === 'checkins' ? 'active' : ''} onClick={() => setActiveTab('checkins')}>Check-in History</button>
-                    <button className={activeTab === 'cleaning' ? 'active' : ''} onClick={() => setActiveTab('cleaning')}>Cleaning Schedule</button>
+                    <button className={activeTab === 'cleaning' ? 'active' : ''} onClick={() => setActiveTab('cleaning')}>Cleaning</button>
+                    <button className={activeTab === 'qrcode' ? 'active' : ''} onClick={() => setActiveTab('qrcode')}>QR Code</button>
                 </nav>
                 <div className="sidebar-footer">
                     <button className="logout-btn" onClick={handleLogout}>Logout</button>

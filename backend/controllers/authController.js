@@ -2,6 +2,8 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const User = require("../models/User");
+const Profile = require("../models/Profile");
+const Login = require("../models/Login");
 
 const registerUser = async (req, res) => {
     try {
@@ -30,20 +32,24 @@ const registerUser = async (req, res) => {
 
         // 4. Save user
         const user = await User.create({
-            name,
             email,
             password: hashedPassword,
-            role,
+            role
+        });
+
+        const profile = await Profile.create({
+            user: user._id,
+            name,
             qrToken
         });
 
-        // Return success message (without token)
+        // Return success message
         console.log(`✅ Success: User registered - ${user.email}`);
         return res.status(201).json({
             message: "User registered successfully",
             user: {
                 id: user._id,
-                name: user.name,
+                name: profile.name,
                 email: user.email,
                 role: user.role
             }
@@ -85,13 +91,26 @@ const loginUser = async (req, res) => {
             { expiresIn: "1d" }
         );
 
-        // 5. Return token + user details
+        // Map abstract client IP dynamically avoiding native proxy blocks
+        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+
+        // Register visual login instance permanently targeting native log schemas
+        await Login.create({
+            user: user._id,
+            ipAddress: clientIp,
+            loginTime: new Date()
+        });
+
+        // Fetch parallel profile securely avoiding native mapping desync
+        const profile = await Profile.findOne({ user: user._id });
+
+        // 5. Return token + user details seamlessly mapped
         console.log(`✅ Success: User logged in - ${user.email}`);
         return res.status(200).json({
             token,
             user: {
                 id: user._id,
-                name: user.name,
+                name: profile ? profile.name : "Admin User", 
                 email: user.email,
                 role: user.role
             }

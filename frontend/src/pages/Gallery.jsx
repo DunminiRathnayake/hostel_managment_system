@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance, { API_BASE_URL } from '../api/axios';
 import './Gallery.css';
 
 const Gallery = () => {
@@ -7,7 +7,7 @@ const Gallery = () => {
     const [images, setImages] = useState([]);
 
     useEffect(() => {
-        axios.get('http://localhost:5000/api/gallery')
+        axiosInstance.get('/gallery')
             .then(res => setImages(res.data))
             .catch(err => console.error(err));
     }, []);
@@ -21,7 +21,7 @@ const Gallery = () => {
                 {images.map((img, i) => (
                     <div className="gallery-card fade-in-up" style={{ animationDelay: `${i * 0.1}s` }} key={img._id || i} onClick={() => setSelectedImage(img)}>
                         <div className="gallery-image-wrapper">
-                            <img src={img.url?.startsWith('http') ? img.url : `http://localhost:5000${img.url}`} alt={img.title} loading="lazy" />
+                            <img src={img.url?.startsWith('http') ? img.url : `${API_BASE_URL}${img.url}`} alt={img.title} loading="lazy" />
                             <div className="gallery-overlay-badge">View</div>
                         </div>
                         <div className="gallery-info">
@@ -34,7 +34,7 @@ const Gallery = () => {
             {selectedImage && (
                 <div className="gallery-modal" onClick={() => setSelectedImage(null)}>
                     <span className="gallery-modal-close" onClick={(e) => { e.stopPropagation(); setSelectedImage(null); }}>&times;</span>
-                    <img className="gallery-modal-content" src={selectedImage.url?.startsWith('http') ? selectedImage.url : `http://localhost:5000${selectedImage.url}`} alt={selectedImage.title} onClick={(e) => e.stopPropagation()} />
+                    <img className="gallery-modal-content" src={selectedImage.url?.startsWith('http') ? selectedImage.url : `${API_BASE_URL}${selectedImage.url}`} alt={selectedImage.title} onClick={(e) => e.stopPropagation()} />
                     <div className="gallery-modal-caption">{selectedImage.title}</div>
                 </div>
             )}

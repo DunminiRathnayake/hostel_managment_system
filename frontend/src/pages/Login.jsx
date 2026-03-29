@@ -64,7 +64,7 @@ const Login = () => {
                 
                 <form onSubmit={handleSubmit} className="login-form">
                     <div className="form-group">
-                        <label>Email Address</label>
+                        <label>Email</label>
                         <input 
                             type="email" 
                             value={email}
@@ -84,7 +84,7 @@ const Login = () => {
                         />
                     </div>
                     <button type="submit" disabled={isLoading} className="login-button">
-                        {isLoading ? 'Please wait...' : 'Login'}
+                        {isLoading ? 'Processing...' : 'Login'}
                     </button>
                     <div style={{ marginTop: '1.2rem', textAlign: 'center', fontSize: '0.9rem' }}>
                         <span style={{ color: '#64748b' }}>Don't have an account? </span>

@@ -1,4 +1,6 @@
 const Payment = require('../models/Payment');
+const User = require('../models/User');
+const Profile = require('../models/Profile');
 
 exports.submitPayment = async (req, res) => {
     try {
@@ -19,9 +21,14 @@ exports.submitPayment = async (req, res) => {
             return res.status(400).json({ message: 'Payment slip image is required' });
         }
 
-        // 4. Save and return pending operation
+        // 4. Look up student profile strictly to burn the exact name natively into the DB
+        const profile = await Profile.findOne({ user: req.user.id });
+        const finalStudentName = profile ? profile.name : 'Unknown Student';
+
+        // 5. Save and return pending operation
         const payment = await Payment.create({
             studentId: req.user.id,
+            studentName: finalStudentName,
             amount,
             category,
             description,
@@ -49,11 +56,14 @@ exports.getMyPayments = async (req, res) => {
 
 exports.getAllPayments = async (req, res) => {
     try {
-        // Used by warden -> inject student reference
-        const payments = await Payment.find()
-            .populate('studentId', 'name email role')
+        const paymentsRaw = await Payment.find()
+            .populate('studentId', 'email role')
             .sort({ createdAt: -1 });
-        res.status(200).json(payments);
+
+        // Natively push to client cleanly avoiding expensive cross-schema iteration loops entirely
+        const validPayments = paymentsRaw.filter(p => p.studentId !== null);
+        
+        res.status(200).json(validPayments);
     } catch (error) {
         console.error('Get All Payments Error:', error);
         res.status(500).json({ message: 'Server error while retrieving all payments' });

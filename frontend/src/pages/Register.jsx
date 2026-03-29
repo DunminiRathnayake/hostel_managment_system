@@ -25,6 +25,23 @@ const Register = () => {
             return;
         }
 
+        // Deep System Validation
+        if (name.length < 3 || name.length > 50) {
+            return setError('Name must be between 3 and 50 characters.');
+        }
+        if (!/^[a-zA-Z\s.-]+$/.test(name)) {
+            return setError('Name can only contain alphabet characters, dots, or spaces.');
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return setError('Please provide a valid email structure.');
+        }
+
+        if (password.length < 6) {
+            return setError('Password must be strictly at least 6 characters secure.');
+        }
+
         try {
             setIsLoading(true);
             const res = await axiosInstance.post('/auth/register', { name, email, password, role });
@@ -57,7 +74,7 @@ const Register = () => {
                 
                 <form onSubmit={handleSubmit} className="login-form">
                     <div className="form-group">
-                        <label>Full Name</label>
+                        <label>Name</label>
                         <input 
                             type="text" 
                             value={name}
@@ -68,7 +85,7 @@ const Register = () => {
                     </div>
                     
                     <div className="form-group">
-                        <label>Email Address</label>
+                        <label>Email</label>
                         <input 
                             type="email" 
                             value={email}
@@ -108,17 +125,16 @@ const Register = () => {
                         >
                             <option value="student" style={{color: 'black'}}>Student</option>
                             <option value="warden" style={{color: 'black'}}>Warden</option>
-                            <option value="visitor" style={{color: 'black'}}>Visitor</option>
                         </select>
                     </div>
 
                     <button type="submit" disabled={isLoading} className="login-button" style={{marginTop: '0.5rem'}}>
-                        {isLoading ? 'Please wait...' : 'Register Account'}
+                        {isLoading ? 'Creating...' : 'Create Account'}
                     </button>
                     
                     <div style={{ marginTop: '1.2rem', textAlign: 'center', fontSize: '0.9rem' }}>
                         <span style={{ color: '#64748b' }}>Already have an account? </span>
-                        <Link to="/login" style={{ color: '#6366f1', textDecoration: 'none', fontWeight: 'bold' }}>Login here</Link>
+                        <Link to="/login" style={{ color: '#6366f1', textDecoration: 'none', fontWeight: 'bold' }}>Login</Link>
                     </div>
                 </form>
             </div>

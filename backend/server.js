@@ -14,6 +14,7 @@ const dashboardRoutes = require('./routes/dashboard');
 const userRoutes = require('./routes/user');
 const galleryRoutes = require('./routes/gallery');
 const cleaningRoutes = require('./routes/cleaning');
+const noticeRoutes = require('./routes/notices');
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/gallery', galleryRoutes);
 app.use('/api/cleaning', cleaningRoutes);
+app.use('/api/notices', noticeRoutes);
 
 // Setup static uploads hosting for receipt images
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

@@ -29,7 +29,15 @@ exports.createCleaningTask = async (req, res) => {
 
 exports.getAllCleaningTasks = async (req, res) => {
     try {
-        const tasks = await Cleaning.find().populate('assignedRoom', 'roomNumber type').sort({ date: 1 });
+        let tasks = await Cleaning.find().populate('assignedRoom', 'roomNumber type').sort({ createdAt: -1 });
+        
+        // Push pending to the top organically preserving the descending assignment order
+        tasks = tasks.sort((a, b) => {
+            if (a.status === 'pending' && b.status !== 'pending') return -1;
+            if (a.status === 'completed' && b.status !== 'completed') return 1;
+            return 0;
+        });
+
         res.status(200).json(tasks);
     } catch (error) {
         res.status(500).json({ message: 'Server error fetching tasks' });
@@ -44,7 +52,15 @@ exports.getStudentCleaningTasks = async (req, res) => {
             return res.status(200).json([]); // No active room, so no tasks
         }
 
-        const tasks = await Cleaning.find({ assignedRoom: allocation.roomId }).sort({ date: 1 });
+        let tasks = await Cleaning.find({ assignedRoom: allocation.roomId }).sort({ createdAt: -1 });
+        
+        // Priority split logic
+        tasks = tasks.sort((a, b) => {
+            if (a.status === 'pending' && b.status !== 'pending') return -1;
+            if (a.status === 'completed' && b.status !== 'completed') return 1;
+            return 0;
+        });
+
         res.status(200).json(tasks);
     } catch (error) {
         res.status(500).json({ message: 'Server error fetching student tasks' });

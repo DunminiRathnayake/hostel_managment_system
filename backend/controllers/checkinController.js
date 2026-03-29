@@ -1,5 +1,6 @@
 const CheckIn = require('../models/CheckIn');
 const User = require('../models/User');
+const Profile = require('../models/Profile');
 const jwt = require('jsonwebtoken');
 
 exports.scanQR = async (req, res) => {
@@ -20,10 +21,15 @@ exports.scanQR = async (req, res) => {
         const qrToken = decoded.qrToken;
         if (!qrToken) return res.status(401).json({ message: 'Invalid QR format.' });
 
-        // Find user exclusively by their secure non-guessable token natively
-        const student = await User.findOne({ qrToken });
+        const profile = await Profile.findOne({ qrToken });
+        if (!profile) {
+            console.log(`❌ QR SCAN FAILED: Token '${qrToken}' not found cleanly in purely Profile Collections!`);
+            return res.status(401).json({ message: 'Invalid or unrecognized secure QR code' });
+        }
 
+        const student = await User.findById(profile.user);
         if (!student || student.role !== 'student') {
+            console.log(`❌ QR SCAN FAILED: Bound Identity is null or missing 'student' role. Profile: ${profile.user}, Role: ${student ? student.role : 'NOT_FOUND'}`);
             return res.status(401).json({ message: 'Invalid or unrecognized secure QR code' });
         }
 
@@ -42,19 +48,28 @@ exports.scanQR = async (req, res) => {
             }
         }
 
+        const today = new Date(now.getTime());
+        today.setHours(0, 0, 0, 0);
+
         // CheckOut Handler: Student has an open session tracking currently null
         if (latestRecord && !latestRecord.checkOutTime) {
-            latestRecord.checkOutTime = now;
-            await latestRecord.save();
+            // Safety Timeout: If the open session started over 16 hours ago, they likely missed a scan. 
+            // We forcefully abandon the old checkout to cleanly prevent permanent logic flip-flop.
+            const sessionDurationMs = now.getTime() - new Date(latestRecord.checkInTime).getTime();
+            const SIXTEEN_HOURS = 16 * 60 * 60 * 1000;
 
-            console.log(`✅ Check-out success for student: ${student.email} at ${now.toISOString()}`);
-            return res.status(200).json({ message: 'Check-out successful', record: latestRecord, studentName: student.name });
+            if (sessionDurationMs < SIXTEEN_HOURS) {
+                latestRecord.checkOutTime = now;
+                await latestRecord.save();
+
+                console.log(`✅ Check-out success for student: ${student.email} at ${now.toISOString()}`);
+                return res.status(200).json({ message: 'Check-out successful', record: latestRecord, studentName: profile.name });
+            } else {
+                console.log(`⚠️ Expired open session detected for ${student.email}. Abandoning checkout, creating fresh check-in.`);
+            }
         }
 
         // CheckIn Handler: Setup completely fresh logic parameters
-        const today = new Date(now.getTime());
-        today.setHours(0, 0, 0, 0); // Normalized cleanly resolving local time daylight mapping bugs
-
         const lateHour = parseInt(process.env.LATE_HOUR || '20', 10);
         const currentHour = now.getHours();
         const isLate = currentHour >= lateHour;
@@ -71,7 +86,7 @@ exports.scanQR = async (req, res) => {
             console.log(`⚠️ Late check-in detected for student: ${student.email}`);
         }
 
-        return res.status(201).json({ message: 'Check-in successful', record: newCheckIn, studentName: student.name });
+        return res.status(201).json({ message: 'Check-in successful', record: newCheckIn, studentName: profile.name });
 
     } catch (error) {
         console.error('Scan QR Controller Logic Error:', error);
@@ -81,7 +96,13 @@ exports.scanQR = async (req, res) => {
 
 exports.getAllRecords = async (req, res) => {
     try {
-        const records = await CheckIn.find().populate('studentId', 'name email').sort({ date: -1, checkInTime: -1 }).limit(100);
+        const recordsRaw = await CheckIn.find().populate('studentId', 'email').sort({ date: -1, checkInTime: -1 }).limit(100);
+        const records = await Promise.all(recordsRaw.map(async r => {
+            const profile = await Profile.findOne({ user: r.studentId?._id });
+            const doc = r.toObject();
+            if (doc.studentId) doc.studentId.name = profile ? profile.name : "External Entity";
+            return doc;
+        }));
         res.status(200).json(records);
     } catch (error) {
         res.status(500).json({ message: 'Server error fetching records' });
@@ -90,7 +111,13 @@ exports.getAllRecords = async (req, res) => {
 
 exports.getLateStudents = async (req, res) => {
     try {
-        const lateRecords = await CheckIn.find({ isLate: true }).populate('studentId', 'name email').sort({ date: -1 });
+        const lateRecordsRaw = await CheckIn.find({ isLate: true }).populate('studentId', 'email').sort({ date: -1 });
+        const lateRecords = await Promise.all(lateRecordsRaw.map(async r => {
+            const profile = await Profile.findOne({ user: r.studentId?._id });
+            const doc = r.toObject();
+            if (doc.studentId) doc.studentId.name = profile ? profile.name : "External Entity";
+            return doc;
+        }));
         res.status(200).json(lateRecords);
     } catch (error) {
         res.status(500).json({ message: 'Server error fetching late students' });
@@ -103,8 +130,10 @@ exports.getMonthlyReport = async (req, res) => {
             { $match: { isLate: true } },
             { $group: { _id: '$studentId', lateCount: { $sum: 1 } } },
             { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'student' } },
+            { $lookup: { from: 'profiles', localField: '_id', foreignField: 'user', as: 'profileData' } },
             { $unwind: '$student' },
-            { $project: { _id: 1, lateCount: 1, 'student.name': 1, 'student.email': 1 } },
+            { $unwind: { path: '$profileData', preserveNullAndEmptyArrays: true } },
+            { $project: { _id: 1, lateCount: 1, 'student.name': { $ifNull: ['$profileData.name', 'Legacy Student'] }, 'student.email': 1 } },
             { $sort: { lateCount: -1 } }
         ]);
 

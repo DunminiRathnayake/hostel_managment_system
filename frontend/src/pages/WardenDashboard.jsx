@@ -2,6 +2,7 @@ import { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import SummaryOverview from '../components/warden/SummaryOverview';
+import StudentsPanel from '../components/warden/StudentsPanel';
 import RoomsPanel from '../components/warden/RoomsPanel';
 import PaymentsPanel from '../components/warden/PaymentsPanel';
 import ComplaintsPanel from '../components/warden/ComplaintsPanel';
@@ -24,6 +25,7 @@ const WardenDashboard = () => {
     const renderContent = () => {
         switch (activeTab) {
             case 'overview': return <SummaryOverview />;
+            case 'students': return <StudentsPanel />;
             case 'rooms': return <RoomsPanel />;
             case 'payments': return <PaymentsPanel />;
             case 'complaints': return <ComplaintsPanel />;
@@ -43,14 +45,15 @@ const WardenDashboard = () => {
                     <p className="user-badge">{user?.name} (Warden)</p>
                 </div>
                 <nav className="sidebar-nav">
-                    <button className={activeTab === 'overview' ? 'active' : ''} onClick={() => setActiveTab('overview')}>Overview</button>
+                    <button className={activeTab === 'overview' ? 'active' : ''} onClick={() => setActiveTab('overview')}>Dashboard</button>
+                    <button className={activeTab === 'students' ? 'active' : ''} onClick={() => setActiveTab('students')}>Students</button>
                     <button className={activeTab === 'rooms' ? 'active' : ''} onClick={() => setActiveTab('rooms')}>Rooms</button>
+                    <button className={activeTab === 'cleaning' ? 'active' : ''} onClick={() => setActiveTab('cleaning')}>Cleaning</button>
                     <button className={activeTab === 'payments' ? 'active' : ''} onClick={() => setActiveTab('payments')}>Payments</button>
                     <button className={activeTab === 'complaints' ? 'active' : ''} onClick={() => setActiveTab('complaints')}>Complaints</button>
                     <button className={activeTab === 'bookings' ? 'active' : ''} onClick={() => setActiveTab('bookings')}>Visitor Bookings</button>
-                    <button className={activeTab === 'checkins' ? 'active' : ''} onClick={() => setActiveTab('checkins')}>Check-in Records</button>
+                    <button className={activeTab === 'checkins' ? 'active' : ''} onClick={() => setActiveTab('checkins')}>Check-ins</button>
                     <button className={activeTab === 'gallery' ? 'active' : ''} onClick={() => setActiveTab('gallery')}>Gallery Setup</button>
-                    <button className={activeTab === 'cleaning' ? 'active' : ''} onClick={() => setActiveTab('cleaning')}>Cleaning Mgmt</button>
                 </nav>
                 <div className="sidebar-footer">
                     <button className="logout-btn" onClick={handleLogout}>Logout</button>

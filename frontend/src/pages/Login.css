@@ -3,9 +3,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+    background: linear-gradient(-45deg, #0f172a, #1e1b4b, #312e81, #020617);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
     font-family: 'Inter', system-ui, sans-serif;
     padding: 1rem;
+}
+
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 .login-card {

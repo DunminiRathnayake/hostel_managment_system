@@ -10,6 +10,7 @@ const bookingSchema = new mongoose.Schema({
         ref: 'User',
         required: function() { return this.type === 'student_visit'; }
     },
+    studentName: { type: String },
     date: { type: Date, required: true },
     time: { type: String, required: true, trim: true },
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },

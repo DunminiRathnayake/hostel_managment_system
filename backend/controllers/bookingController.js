@@ -1,4 +1,5 @@
 const Booking = require('../models/Booking');
+const Profile = require('../models/Profile');
 
 exports.createBooking = async (req, res) => {
     try {
@@ -28,12 +29,26 @@ exports.createBooking = async (req, res) => {
             return res.status(400).json({ message: 'Cannot book past dates' });
         }
 
+        // Time validation: Between 08:00 AM and 07:30 PM (19:30)
+        const [hours, minutes] = time.split(':').map(Number);
+        const timeInMinutes = hours * 60 + minutes;
+        if (timeInMinutes < 480 || timeInMinutes > 1170) {
+            return res.status(400).json({ message: 'Visiting hours are strictly between 08:00 AM and 07:30 PM.' });
+        }
+
+        let finalStudentName;
+        if (type === 'student_visit') {
+            const profile = await Profile.findOne({ user: studentId });
+            finalStudentName = profile ? profile.name : 'Unknown Student';
+        }
+
         const booking = await Booking.create({
             visitorName,
             phone,
             NIC,
             type,
             studentId: type === 'student_visit' ? studentId : undefined,
+            studentName: finalStudentName,
             date: bookingDate,
             time
         });
@@ -54,9 +69,22 @@ exports.getMyBookings = async (req, res) => {
             return res.status(400).json({ message: 'Phone and NIC exact match pairs are required to retrieve native bookings securely' });
         }
 
-        const bookings = await Booking.find({ phone, NIC })
-            .populate('studentId', 'name email role')
+        const bookingsRaw = await Booking.find({ phone, NIC })
+            .populate('studentId', 'email role')
             .sort({ date: -1, createdAt: -1 });
+
+        const bookings = await Promise.all(bookingsRaw.map(async (b) => {
+            const bObj = b.toObject();
+            if (bObj.type === 'student_visit' && bObj.studentId && !bObj.studentName) {
+                try {
+                    const profile = await Profile.findOne({ user: bObj.studentId._id });
+                    bObj.studentName = profile ? profile.name : 'Unknown Student';
+                } catch (innerErr) {
+                    bObj.studentName = 'Unknown Student';
+                }
+            }
+            return bObj;
+        }));
 
         res.status(200).json(bookings);
     } catch (error) {
@@ -67,10 +95,23 @@ exports.getMyBookings = async (req, res) => {
 
 exports.getAllBookings = async (req, res) => {
     try {
-        const bookings = await Booking.find()
-            .populate('studentId', 'name email role')
+        const bookingsRaw = await Booking.find()
+            .populate('studentId', 'email role')
             .sort({ date: -1, createdAt: -1 });
         
+        const bookings = await Promise.all(bookingsRaw.map(async (b) => {
+            const bObj = b.toObject();
+            if (bObj.type === 'student_visit' && bObj.studentId && !bObj.studentName) {
+                try {
+                    const profile = await Profile.findOne({ user: bObj.studentId._id });
+                    bObj.studentName = profile ? profile.name : 'Unknown Student';
+                } catch (innerErr) {
+                    bObj.studentName = 'Unknown Student';
+                }
+            }
+            return bObj;
+        }));
+
         res.status(200).json(bookings);
     } catch (error) {
         console.error('Get All Bookings Error:', error);

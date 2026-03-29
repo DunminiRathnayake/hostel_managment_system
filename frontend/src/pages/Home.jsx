@@ -23,10 +23,10 @@ const Home = () => {
         <div className="home-container fade-in-up">
             <div className="global-card home-hub-card">
                 <div className="home-avatar">
-                    {user.name.charAt(0)}
+                    {user?.name ? user.name.charAt(0) : (user?.email ? user.email.charAt(0).toUpperCase() : 'U')}
                 </div>
                 
-                <h1 className="home-greeting">Welcome back, {user.name.split(' ')[0]}!</h1>
+                <h1 className="home-greeting">Welcome, {user?.name ? user.name.split(' ')[0] : 'User'}!</h1>
                 <p className="home-role">
                     Your Role: <span className="home-badge">{user.role}</span>
                 </p>
