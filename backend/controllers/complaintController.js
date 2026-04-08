@@ -1,6 +1,8 @@
 const Complaint = require('../models/Complaint');
 const Allocation = require('../models/Allocation');
 const Profile = require('../models/Profile');
+const Registration = require('../models/Registration');
+const User = require('../models/User');
 
 // @route   POST /api/complaints
 // @desc    Submit a new complaint
@@ -55,18 +57,28 @@ exports.getMyComplaints = async (req, res) => {
 exports.getAllComplaints = async (req, res) => {
     try {
         const complaintsRaw = await Complaint.find({})
-            .populate('studentId', 'email')
             .populate('roomId', 'roomNumber')
             .sort({ createdAt: -1 });
 
-        const validComplaints = complaintsRaw.filter(c => c.studentId !== null);
-
-        const complaints = await Promise.all(validComplaints.map(async (c) => {
-            const profile = await Profile.findOne({ user: c.studentId._id });
+        const complaints = await Promise.all(complaintsRaw.map(async (c) => {
             const cObj = c.toObject();
-            if (cObj.studentId) {
-                cObj.studentId.name = profile ? profile.name : 'Unknown Student';
-            }
+            const studentId = cObj.studentId;
+
+            const [profile, reg, user] = await Promise.all([
+                Profile.findOne({ user: studentId }).lean(),
+                Registration.findById(studentId).lean(),
+                User.findById(studentId).lean()
+            ]);
+
+            const resolvedName = reg?.fullName || profile?.fullName || profile?.name || "Unknown Student";
+            const resolvedEmail = reg?.email || user?.email || "Unknown Email";
+
+            cObj.studentId = {
+                _id: studentId,
+                name: resolvedName,
+                email: resolvedEmail
+            };
+
             return cObj;
         }));
 

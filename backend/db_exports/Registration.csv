@@ -1,0 +1,2 @@
+_id,fullName,email,password,role,campus,studentPhone,emergencyContactName,emergencyPhone,nicFrontImage,nicBackImage,qrToken,status,createdAt,updatedAt,__v
+69ca580dab91642292a3ba5f,Dasuni,dasuni@test.com,$2b$10$4uMSHsGYqPSaTo2SebOvqu4ud9ComC/LmNXJQGVEATpcUL318pFYa,student,SLIITT,0777934012,Nawarathna,0701234543,/uploads/nic/1774868493677-266720330.jpg,/uploads/nic/1774868493681-591716938.jpg,192529e8b79ce79b21e7d933dc874c29f1e506a6a559f09cfe6575ef488cbc4e,approved,Mon Mar 30 2026 16:31:33 GMT+0530 (India Standard Time),Mon Mar 30 2026 16:31:33 GMT+0530 (India Standard Time),0

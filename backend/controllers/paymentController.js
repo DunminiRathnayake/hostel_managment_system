@@ -22,8 +22,21 @@ exports.submitPayment = async (req, res) => {
         }
 
         // 4. Look up student profile strictly to burn the exact name natively into the DB
-        const profile = await Profile.findOne({ user: req.user.id });
-        const finalStudentName = profile ? profile.name : 'Unknown Student';
+        const Registration = require('../models/Registration'); // Import Registration
+        
+        let finalStudentName = 'Unknown Student';
+        const profile = await Profile.findOne({ user: req.user.id }).lean();
+        if (profile && (profile.name || profile.fullName)) {
+            finalStudentName = profile.fullName || profile.name;
+        } else {
+            const reg = await Registration.findById(req.user.id).lean();
+            if (reg && reg.fullName) {
+                finalStudentName = reg.fullName;
+            } else {
+                const userObj = await User.findById(req.user.id).lean();
+                if (userObj && userObj.email) finalStudentName = userObj.email.split('@')[0];
+            }
+        }
 
         // 5. Save and return pending operation
         const payment = await Payment.create({

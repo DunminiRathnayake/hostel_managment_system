@@ -6,7 +6,8 @@ const {
     allocateRoom,
     removeStudent,
     updateRoomStatus,
-    editRoom
+    editRoom,
+    updateRoomGroup
 } = require('../controllers/roomController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -16,5 +17,6 @@ router.post('/allocate', protect, authorize('warden'), allocateRoom);
 router.post('/remove', protect, authorize('warden'), removeStudent);
 router.put('/:id/status', protect, authorize('warden'), updateRoomStatus);
 router.put('/:id', protect, authorize('warden'), editRoom);
+router.put('/:id/group', protect, authorize('warden'), updateRoomGroup);
 
 module.exports = router;

@@ -15,6 +15,7 @@ const userRoutes = require('./routes/user');
 const galleryRoutes = require('./routes/gallery');
 const cleaningRoutes = require('./routes/cleaning');
 const noticeRoutes = require('./routes/notices');
+const reviewRoutes = require('./routes/reviewRoutes');
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/reviews', reviewRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/payments', paymentRoutes);

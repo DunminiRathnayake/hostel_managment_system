@@ -7,17 +7,17 @@ const profileSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
-    name: {
+    fullName: {
         type: String,
         required: true,
         trim: true,
     },
     campus: { type: String, trim: true },
-    parentName: { type: String, trim: true },
-    parentPhone: { type: String, trim: true },
     studentPhone: { type: String, trim: true },
-    nicFront: { type: String },
-    nicBack: { type: String },
+    emergencyContactName: { type: String, trim: true },
+    emergencyPhone: { type: String, trim: true },
+    nicFrontImage: { type: String },
+    nicBackImage: { type: String },
     qrToken: { type: String, unique: true, sparse: true },
     status: {
         type: String,

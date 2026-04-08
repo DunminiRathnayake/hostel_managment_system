@@ -1,0 +1,15 @@
+{
+  "_id": "69c80f1d29e1599e91d0de4f",
+  "user": "69c57d20dd06b507907d4cc9",
+  "name": "abcd",
+  "status": "active",
+  "createdAt": "2026-03-28T17:25:49.718Z",
+  "updatedAt": "2026-03-28T17:25:49.718Z",
+  "campus": "SLIIT",
+  "parentName": "Rathnayake",
+  "parentPhone": "0714378987",
+  "studentPhone": "0701243191",
+  "nicFront": "/uploads/profiles/1774550840539-75937039.jpeg",
+  "nicBack": "/uploads/profiles/1774550840541-287740845.jpeg",
+  "qrToken": "95dc66b92acf5836aed82b307caacd29d571f8397e4a6e733b5ec12200b4ffc1"
+}

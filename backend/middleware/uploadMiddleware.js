@@ -9,6 +9,8 @@ const storage = multer.diskStorage({
             folder = 'gallery';
         } else if (req.originalUrl && req.originalUrl.includes('profile')) {
             folder = 'profiles';
+        } else if (req.originalUrl && req.originalUrl.includes('register')) {
+            folder = 'nic';
         }
         const dir = path.join(__dirname, `../uploads/${folder}`);
         if (!fs.existsSync(dir)) {

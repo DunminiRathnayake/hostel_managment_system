@@ -1,0 +1,10 @@
+_id,email,password,role,createdAt,updatedAt,__v
+69bd42a481927e4257463616,dunminir@gmail.com,$2b$10$EUG6E98NZyd9XCt3zI9TIOYXtpW3vmeB82GU52xG3hmG6jU.i949C,student,Fri Mar 20 2026 18:20:44 GMT+0530 (India Standard Time),Thu Mar 26 2026 23:57:31 GMT+0530 (India Standard Time),0
+69bd497a9a27a5a52961a2e9,warden01@test.com,$2b$10$lFrtJ4/.4oxTfbTMXJaLlug3hrybHEz.jknTmMHW/QNnKNFGlx8hS,warden,Fri Mar 20 2026 18:49:54 GMT+0530 (India Standard Time),Thu Mar 26 2026 23:58:18 GMT+0530 (India Standard Time),0
+69c57d20dd06b507907d4cc9,abcd@test.com,$2b$10$OSFL96uGmRTx3qmxSrS68ujCr432tsN6VZZ8kxEcHsFf1xfoAghIG,student,Fri Mar 27 2026 00:08:24 GMT+0530 (India Standard Time),Fri Mar 27 2026 00:17:20 GMT+0530 (India Standard Time),0
+69c80b002a3dcc12abb75d8c,kamal@test.com,$2b$10$CxsSIYUatekkMKLR5iL3wOVqHaPv9XIFlw.gt7EfHFIOXWH3rRCyq,student,Sat Mar 28 2026 22:38:16 GMT+0530 (India Standard Time),Sat Mar 28 2026 22:38:16 GMT+0530 (India Standard Time),0
+69c901a4dc4d692ace911744,student_1774780836038@test.com,$2b$10$x5qQSx4DIOsg.WmQLGHZxOkuO9oAwFFb5xYoMfYiq5xJO8rwbrTG.,student,Sun Mar 29 2026 16:10:36 GMT+0530 (India Standard Time),Sun Mar 29 2026 16:10:36 GMT+0530 (India Standard Time),0
+69c901a4dc4d692ace91174d,warden_1774780836038@test.com,$2b$10$Hcxwye1CcaSnHh8qm6j9x.Wl4AjulHBQgDO19uKilnRm5MU2Ti3lq,warden,Sun Mar 29 2026 16:10:36 GMT+0530 (India Standard Time),Sun Mar 29 2026 16:10:36 GMT+0530 (India Standard Time),0
+69c9270e7d25c8e9625b7522,nimal@test.com,$2b$10$vhj5GUua3Ur9BzDuojV3Oekym1krsokYVsVbMlMFhlU4617V.ys5a,student,Sun Mar 29 2026 18:50:14 GMT+0530 (India Standard Time),Sun Mar 29 2026 18:50:14 GMT+0530 (India Standard Time),0
+69c97ab70ce4b82249461b34,sunil@test.com,$2b$10$da2p1wyfyVVvXC3mbQbxtecmiShMTyfbagcbQ3AAtio.kcGVl2Tky,student,Mon Mar 30 2026 00:47:11 GMT+0530 (India Standard Time),Mon Mar 30 2026 00:47:11 GMT+0530 (India Standard Time),0
+69ca55d2a861b9c2ffaabd48,hasi@test.com,$2b$10$XsfnQfdiyWhSyRmWdz7S7eVLhmTTcfNOt4Kq37D6S9TlmgGSDCeD.,student,Mon Mar 30 2026 16:22:02 GMT+0530 (India Standard Time),Mon Mar 30 2026 16:22:02 GMT+0530 (India Standard Time),0

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware');
-const { getProfile, updateProfile, getStudentsList, getMyQR } = require('../controllers/userController');
+const { getProfile, updateProfile, getStudentsList, getMyQR, deactivateStudent } = require('../controllers/userController');
 
 // Public lookup routes targeting specific identifiers
 router.get('/students', getStudentsList);
@@ -16,5 +16,7 @@ router.put('/profile', protect, (req, res, next) => {
     });
 }, updateProfile);
 router.get('/my-qr', protect, getMyQR);
+
+router.put('/deactivate/:id', protect, deactivateStudent);
 
 module.exports = router;

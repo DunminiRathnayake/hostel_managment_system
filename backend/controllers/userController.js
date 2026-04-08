@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Profile = require('../models/Profile');
+const Registration = require('../models/Registration');
 const Allocation = require('../models/Allocation');
 const qrcode = require('qrcode');
 const crypto = require('crypto');
@@ -20,16 +21,20 @@ exports.getMyRoom = async (req, res) => {
 
 exports.getProfile = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).select('-password');
-        const profile = await Profile.findOne({ user: req.user.id });
-        if (!user) return res.status(404).json({ message: 'Target user identity isolated.' });
+        let userProfile = await Registration.findById(req.user.id).select('-password');
         
-        const mergedData = { ...user.toObject() };
-        if (profile) {
-            Object.assign(mergedData, profile.toObject());
+        if (!userProfile) {
+            // Fallback for Wardens / Legacy users
+            const user = await User.findById(req.user.id).select('-password');
+            if (!user) return res.status(404).json({ message: 'Target user identity isolated.' });
+            
+            const profile = await Profile.findOne({ user: req.user.id });
+            const mergedData = { ...user.toObject() };
+            if (profile) Object.assign(mergedData, profile.toObject());
+            return res.status(200).json(mergedData);
         }
         
-        res.status(200).json(mergedData);
+        res.status(200).json(userProfile);
     } catch (error) {
         console.error('Fetch Profile logic blocked', error);
         res.status(500).json({ message: 'Internal logic crash fetching native profile configurations.' });
@@ -38,26 +43,41 @@ exports.getProfile = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
     try {
-        const { name, campus, parentName, parentPhone, studentPhone } = req.body;
-        let profile = await Profile.findOne({ user: req.user.id });
+        const { fullName, campus, emergencyContactName, emergencyPhone, studentPhone } = req.body;
+        
+        let reg = await Registration.findById(req.user.id);
+        
+        if (reg) {
+            if (fullName) reg.fullName = fullName;
+            if (campus) reg.campus = campus;
+            if (emergencyContactName) reg.emergencyContactName = emergencyContactName;
+            if (emergencyPhone) reg.emergencyPhone = emergencyPhone;
+            if (studentPhone) reg.studentPhone = studentPhone;
 
-        if (!profile) {
-             profile = new Profile({ user: req.user.id });
+            if (req.files) {
+                if (req.files.nicFront) reg.nicFrontImage = `/uploads/profiles/${req.files.nicFront[0].filename}`;
+                if (req.files.nicBack) reg.nicBackImage = `/uploads/profiles/${req.files.nicBack[0].filename}`;
+            }
+
+            await reg.save();
+            return res.status(200).json(reg);
         }
 
-        if (name) profile.name = name;
+        // Fallback to legacy Profile for wardens
+        const { name, parentName, parentPhone } = req.body;
+        let profile = await Profile.findOne({ user: req.user.id });
+
+        if (!profile) profile = new Profile({ user: req.user.id });
+
+        if (name || fullName) profile.fullName = name || fullName;
         if (campus) profile.campus = campus;
-        if (parentName) profile.parentName = parentName;
-        if (parentPhone) profile.parentPhone = parentPhone;
+        if (parentName || emergencyContactName) profile.emergencyContactName = parentName || emergencyContactName;
+        if (parentPhone || emergencyPhone) profile.emergencyPhone = parentPhone || emergencyPhone;
         if (studentPhone) profile.studentPhone = studentPhone;
 
         if (req.files) {
-            if (req.files.nicFront) {
-                profile.nicFront = `/uploads/profiles/${req.files.nicFront[0].filename}`;
-            }
-            if (req.files.nicBack) {
-                profile.nicBack = `/uploads/profiles/${req.files.nicBack[0].filename}`;
-            }
+            if (req.files.nicFront) profile.nicFront = `/uploads/profiles/${req.files.nicFront[0].filename}`;
+            if (req.files.nicBack) profile.nicBack = `/uploads/profiles/${req.files.nicBack[0].filename}`;
         }
 
         await profile.save();
@@ -72,36 +92,55 @@ exports.getStudentsList = async (req, res) => {
     try {
         const { unassigned } = req.query;
         
-        const studentsRaw = await User.find({ role: 'student' }).select('-password');
+        // Fetch all potential student sources
+        const [usersRaw, registrations, allocations] = await Promise.all([
+            User.find({ role: 'student' }).select('-password'),
+            Registration.find(),
+            Allocation.find({ status: 'active' }).populate('roomId')
+        ]);
+
         let mappedStudents = [];
-        
-        const allocations = await Allocation.find({ status: 'active' }).populate('roomId');
-        
-        for (const s of studentsRaw) {
+        const processedEmails = new Set();
+
+        // 1. Process Registrations (Primary source for new students)
+        for (const reg of registrations) {
+            const alloc = allocations.find(a => a.studentId.toString() === reg._id.toString());
+            mappedStudents.push({
+                _id: reg._id,
+                name: reg.fullName,
+                email: reg.email,
+                campus: reg.campus,
+                studentPhone: reg.studentPhone,
+                parentName: reg.emergencyContactName,
+                parentPhone: reg.emergencyPhone,
+                assignedRoom: alloc ? alloc.roomId.roomNumber : 'Unassigned',
+                status: reg.isActive === false ? 'inactive' : 'active'
+            });
+            processedEmails.add(reg.email.toLowerCase());
+        }
+
+        // 2. Process legacy User collection (Wardens or old students)
+        for (const s of usersRaw) {
+            if (processedEmails.has(s.email.toLowerCase())) continue;
+
             const profile = await Profile.findOne({ user: s._id });
             const alloc = allocations.find(a => a.studentId.toString() === s._id.toString());
             
-            if (profile) {
-                mappedStudents.push({
-                    _id: s._id,
-                    name: profile.name,
-                    email: s.email,
-                    campus: profile.campus,
-                    studentPhone: profile.studentPhone,
-                    parentName: profile.parentName,
-                    parentPhone: profile.parentPhone,
-                    assignedRoom: alloc ? alloc.roomId.roomNumber : 'Unassigned',
-                    status: profile.status
-                });
-            } else {
-                mappedStudents.push({
-                    _id: s._id,
-                    name: 'Profile Incomplete',
-                    email: s.email,
-                    assignedRoom: alloc ? alloc.roomId.roomNumber : 'Unassigned',
-                    status: 'inactive'
-                });
-            }
+            // Safely extract name from Profile and fallback to Email Username if missing
+            const emailName = s.email.split('@')[0];
+            const cleanEmailName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+            
+            mappedStudents.push({
+                _id: s._id,
+                name: profile?.fullName || cleanEmailName,
+                email: s.email,
+                campus: profile?.campus || 'N/A',
+                studentPhone: profile?.studentPhone || 'N/A',
+                parentName: profile?.emergencyContactName || 'N/A',
+                parentPhone: profile?.emergencyPhone || 'N/A',
+                assignedRoom: alloc ? alloc.roomId.roomNumber : 'Unassigned',
+                status: s.isActive === false ? 'inactive' : 'active'
+            });
         }
         
         if (unassigned === 'true') {
@@ -110,26 +149,40 @@ exports.getStudentsList = async (req, res) => {
         
         res.status(200).json(mappedStudents);
     } catch (error) {
-        console.error('Fetch Students error', error);
-        res.status(500).json({ message: 'Error retrieving hostel directory.' });
+        console.error('Fetch Students consolidated error', error);
+        res.status(500).json({ message: 'Error retrieving consolidated hostel directory.' });
     }
 };
 
 exports.getMyQR = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
-        if (!user) return res.status(404).json({ message: 'User not found' });
+        let token;
         
-        let profile = await Profile.findOne({ user: req.user.id });
-        if (!profile) {
-            profile = new Profile({ user: req.user.id, name: 'Student' });
-        }
+        // Try Registration first (modern student login)
+        const registration = await Registration.findById(req.user.id);
+        if (registration) {
+            token = registration.qrToken;
+            if (!token) {
+                token = crypto.randomBytes(32).toString('hex');
+                registration.qrToken = token;
+                await registration.save();
+            }
+        } else {
+            // Fallback for legacy Users
+            const user = await User.findById(req.user.id);
+            if (!user) return res.status(404).json({ message: 'User not found' });
+            
+            let profile = await Profile.findOne({ user: req.user.id });
+            if (!profile) {
+                profile = new Profile({ user: req.user.id, name: 'Student' });
+            }
 
-        let token = profile.qrToken;
-        if (!token) {
-            token = crypto.randomBytes(32).toString('hex');
-            profile.qrToken = token;
-            await profile.save();
+            token = profile.qrToken;
+            if (!token) {
+                token = crypto.randomBytes(32).toString('hex');
+                profile.qrToken = token;
+                await profile.save();
+            }
         }
 
         const jwtToken = jwt.sign(
@@ -141,9 +194,57 @@ exports.getMyQR = async (req, res) => {
         const payload = JSON.stringify({ token: jwtToken });
         const qrDataUrl = await qrcode.toDataURL(payload);
 
-        res.status(200).json({ qrImage: qrDataUrl });
+        res.status(200).json({ qrImage: qrDataUrl, token: jwtToken });
     } catch (error) {
         console.error('QR Generate Error:', error);
         res.status(500).json({ message: 'Failed to generate secure QR code' });
+    }
+};
+
+exports.deactivateStudent = async (req, res) => {
+    try {
+        const studentId = req.params.id;
+
+        // 1. Deactivate User/Registration
+        let deactivated = false;
+        const reg = await Registration.findById(studentId);
+        if (reg) {
+            reg.isActive = false;
+            await reg.save();
+            deactivated = true;
+        }
+
+        const user = await User.findById(studentId);
+        if (user) {
+            user.isActive = false;
+            await user.save();
+            deactivated = true;
+        }
+
+        if (!deactivated) {
+            return res.status(404).json({ message: "Student not found" });
+        }
+
+        // 2. Remove Room Assignment & Decrement Room Occupancy
+        const allocation = await Allocation.findOne({ studentId, status: 'active' }).populate('roomId');
+        if (allocation && allocation.roomId) {
+            allocation.status = 'left';
+            await allocation.save();
+
+            const Room = require('../models/Room');
+            const room = await Room.findById(allocation.roomId._id);
+            if (room) {
+                room.currentOccupancy = Math.max(0, room.currentOccupancy - 1);
+                if (room.currentOccupancy < room.capacity) {
+                    room.status = 'available';
+                }
+                await room.save();
+            }
+        }
+
+        res.status(200).json({ message: "Student successfully deactivated and removed from room" });
+    } catch (error) {
+        console.error('Deactivate Student Error:', error);
+        res.status(500).json({ message: 'Internal server error during deactivation' });
     }
 };

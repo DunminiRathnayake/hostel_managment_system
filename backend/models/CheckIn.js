@@ -19,6 +19,10 @@ const checkInSchema = new mongoose.Schema({
     isLate: {
         type: Boolean,
         default: false
+    },
+    isLateCheckOut: {
+        type: Boolean,
+        default: false
     }
 }, { timestamps: true });
 

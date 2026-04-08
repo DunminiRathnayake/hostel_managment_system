@@ -1,6 +1,7 @@
 const CheckIn = require('../models/CheckIn');
 const User = require('../models/User');
 const Profile = require('../models/Profile');
+const Registration = require('../models/Registration');
 const jwt = require('jsonwebtoken');
 
 exports.scanQR = async (req, res) => {
@@ -21,23 +22,27 @@ exports.scanQR = async (req, res) => {
         const qrToken = decoded.qrToken;
         if (!qrToken) return res.status(401).json({ message: 'Invalid QR format.' });
 
-        const profile = await Profile.findOne({ qrToken });
-        if (!profile) {
-            console.log(`❌ QR SCAN FAILED: Token '${qrToken}' not found cleanly in purely Profile Collections!`);
-            return res.status(401).json({ message: 'Invalid or unrecognized secure QR code' });
+        // Try finding student in Registration first (most common for new students)
+        let studentProfile = await Registration.findOne({ qrToken }).lean();
+        let studentName = "";
+        let studentId = "";
+
+        if (studentProfile) {
+            studentName = studentProfile.fullName;
+            studentId = studentProfile._id;
+        } else {
+            // Fallback to legacy Profile collection
+            const profile = await Profile.findOne({ qrToken }).lean();
+            if (!profile) {
+                console.log(`❌ QR SCAN FAILED: Token '${qrToken}' mismatch!`);
+                return res.status(401).json({ message: 'Invalid or unrecognized secure QR code' });
+            }
+            studentName = profile.fullName || profile.name;
+            studentId = profile.user;
         }
 
-        const student = await User.findById(profile.user);
-        if (!student || student.role !== 'student') {
-            console.log(`❌ QR SCAN FAILED: Bound Identity is null or missing 'student' role. Profile: ${profile.user}, Role: ${student ? student.role : 'NOT_FOUND'}`);
-            return res.status(401).json({ message: 'Invalid or unrecognized secure QR code' });
-        }
-
-        const studentId = student._id;
-
-        // Locate the absolute most recent activity node, ignoring the clock entirely solving midnight thresholds natively
+        // Locate the absolute most recent activity node
         const latestRecord = await CheckIn.findOne({ studentId }).sort({ checkInTime: -1 });
-
         const now = new Date();
 
         // Cooldown Protection
@@ -51,28 +56,27 @@ exports.scanQR = async (req, res) => {
         const today = new Date(now.getTime());
         today.setHours(0, 0, 0, 0);
 
-        // CheckOut Handler: Student has an open session tracking currently null
+        // CheckOut Handler
         if (latestRecord && !latestRecord.checkOutTime) {
-            // Safety Timeout: If the open session started over 16 hours ago, they likely missed a scan. 
-            // We forcefully abandon the old checkout to cleanly prevent permanent logic flip-flop.
             const sessionDurationMs = now.getTime() - new Date(latestRecord.checkInTime).getTime();
             const SIXTEEN_HOURS = 16 * 60 * 60 * 1000;
 
             if (sessionDurationMs < SIXTEEN_HOURS) {
-                latestRecord.checkOutTime = now;
-                await latestRecord.save();
+                const lateHour = parseInt(process.env.LATE_HOUR || '20', 10);
+                const isLateCheckOut = now.getHours() >= lateHour || now.getHours() < 6;
 
-                console.log(`✅ Check-out success for student: ${student.email} at ${now.toISOString()}`);
-                return res.status(200).json({ message: 'Check-out successful', record: latestRecord, studentName: profile.name });
-            } else {
-                console.log(`⚠️ Expired open session detected for ${student.email}. Abandoning checkout, creating fresh check-in.`);
+                latestRecord.checkOutTime = now;
+                latestRecord.isLateCheckOut = isLateCheckOut;
+                if (isLateCheckOut) latestRecord.isLate = true; // Ensure visibility in Late Reports
+
+                await latestRecord.save();
+                return res.status(200).json({ message: 'Check-out successful', record: latestRecord, studentName });
             }
         }
 
-        // CheckIn Handler: Setup completely fresh logic parameters
+        // CheckIn Handler
         const lateHour = parseInt(process.env.LATE_HOUR || '20', 10);
-        const currentHour = now.getHours();
-        const isLate = currentHour >= lateHour;
+        const isLate = now.getHours() >= lateHour || now.getHours() < 6;
 
         const newCheckIn = await CheckIn.create({
             studentId,
@@ -81,26 +85,26 @@ exports.scanQR = async (req, res) => {
             isLate
         });
 
-        console.log(`✅ Check-in success for student: ${student.email} at ${now.toISOString()}`);
-        if (isLate) {
-            console.log(`⚠️ Late check-in detected for student: ${student.email}`);
-        }
-
-        return res.status(201).json({ message: 'Check-in successful', record: newCheckIn, studentName: profile.name });
+        return res.status(201).json({ message: 'Check-in successful', record: newCheckIn, studentName });
 
     } catch (error) {
-        console.error('Scan QR Controller Logic Error:', error);
-        res.status(500).json({ message: 'Server error parsing scanning sequence internally' });
+        console.error('Scan QR Controller Error:', error);
+        res.status(500).json({ message: 'Server error parsing scanning sequence' });
     }
 };
 
 exports.getAllRecords = async (req, res) => {
     try {
-        const recordsRaw = await CheckIn.find().populate('studentId', 'email').sort({ date: -1, checkInTime: -1 }).limit(100);
+        const recordsRaw = await CheckIn.find().sort({ checkInTime: -1 }).limit(100);
         const records = await Promise.all(recordsRaw.map(async r => {
-            const profile = await Profile.findOne({ user: r.studentId?._id });
+            const [profile, reg] = await Promise.all([
+                Profile.findOne({ user: r.studentId }).lean(),
+                Registration.findById(r.studentId).lean()
+            ]);
+            
             const doc = r.toObject();
-            if (doc.studentId) doc.studentId.name = profile ? profile.name : "External Entity";
+            const name = reg?.fullName || profile?.fullName || profile?.name || "Unknown Student";
+            doc.studentName = name; // Add studentName flat to avoid nested populate crashes
             return doc;
         }));
         res.status(200).json(records);
@@ -111,11 +115,14 @@ exports.getAllRecords = async (req, res) => {
 
 exports.getLateStudents = async (req, res) => {
     try {
-        const lateRecordsRaw = await CheckIn.find({ isLate: true }).populate('studentId', 'email').sort({ date: -1 });
+        const lateRecordsRaw = await CheckIn.find({ isLate: true }).sort({ date: -1 });
         const lateRecords = await Promise.all(lateRecordsRaw.map(async r => {
-            const profile = await Profile.findOne({ user: r.studentId?._id });
+            const [profile, reg] = await Promise.all([
+                Profile.findOne({ user: r.studentId }).lean(),
+                Registration.findById(r.studentId).lean()
+            ]);
             const doc = r.toObject();
-            if (doc.studentId) doc.studentId.name = profile ? profile.name : "External Entity";
+            doc.studentName = reg?.fullName || profile?.fullName || profile?.name || "Unknown Student";
             return doc;
         }));
         res.status(200).json(lateRecords);
@@ -126,16 +133,28 @@ exports.getLateStudents = async (req, res) => {
 
 exports.getMonthlyReport = async (req, res) => {
     try {
-        const report = await CheckIn.aggregate([
+        const records = await CheckIn.aggregate([
             { $match: { isLate: true } },
             { $group: { _id: '$studentId', lateCount: { $sum: 1 } } },
-            { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'student' } },
-            { $lookup: { from: 'profiles', localField: '_id', foreignField: 'user', as: 'profileData' } },
-            { $unwind: '$student' },
-            { $unwind: { path: '$profileData', preserveNullAndEmptyArrays: true } },
-            { $project: { _id: 1, lateCount: 1, 'student.name': { $ifNull: ['$profileData.name', 'Legacy Student'] }, 'student.email': 1 } },
             { $sort: { lateCount: -1 } }
         ]);
+
+        const report = await Promise.all(records.map(async item => {
+            const [profile, reg, user] = await Promise.all([
+                Profile.findOne({ user: item._id }).lean(),
+                Registration.findById(item._id).lean(),
+                User.findById(item._id).lean()
+            ]);
+
+            return {
+                _id: item._id,
+                lateCount: item.lateCount,
+                student: {
+                    name: reg?.fullName || profile?.fullName || profile?.name || user?.email?.split('@')[0] || 'Unknown',
+                    email: reg?.email || user?.email || 'N/A'
+                }
+            };
+        }));
 
         res.status(200).json(report);
     } catch (error) {
@@ -146,9 +165,9 @@ exports.getMonthlyReport = async (req, res) => {
 
 exports.getMyCheckIns = async (req, res) => {
     try {
-        const records = await CheckIn.find({ studentId: req.user.id }).sort({ date: -1, checkInTime: -1 }).limit(50);
+        const records = await CheckIn.find({ studentId: req.user.id }).sort({ checkInTime: -1 }).limit(50);
         res.status(200).json(records);
     } catch (error) {
-        res.status(500).json({ message: 'Internal server logic crash reading arrays internally' });
+        res.status(500).json({ message: 'Error reading check-ins' });
     }
 };

@@ -181,3 +181,20 @@ exports.editRoom = async (req, res) => {
         res.status(500).json({ message: 'Internal logic error editing framework.' });
     }
 };
+
+// @route   PUT /api/rooms/:id/group
+// @desc    Update room group for cleaning
+// @access  Private/Warden
+exports.updateRoomGroup = async (req, res) => {
+    try {
+        const { group } = req.body;
+        const room = await Room.findByIdAndUpdate(req.params.id, { group }, { new: true });
+        if (!room) {
+            return res.status(404).json({ message: 'Room not found' });
+        }
+        res.status(200).json({ message: 'Room group updated', room });
+    } catch (error) {
+        console.error('Error updating room group:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
