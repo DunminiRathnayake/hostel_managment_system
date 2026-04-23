@@ -69,39 +69,44 @@ exports.getMyPayments = async (req, res) => {
 
 exports.getAllPayments = async (req, res) => {
     try {
-        const paymentsRaw = await Payment.find()
-            .populate('studentId', 'email role')
-            .sort({ createdAt: -1 });
+        // 1. Fetch all payments sorted by newest date first
+        const allPayments = await Payment.find().sort({ createdAt: -1 });
 
-        // Natively push to client cleanly avoiding expensive cross-schema iteration loops entirely
-        const validPayments = paymentsRaw.filter(p => p.studentId !== null);
-        
-        res.status(200).json(validPayments);
+        // 2. Prioritize "pending" payments at the top of the array
+        const sorted = [
+            ...allPayments.filter(p => p.status === 'pending'),
+            ...allPayments.filter(p => p.status !== 'pending')
+        ];
+
+        res.status(200).json(sorted);
     } catch (error) {
-        console.error('Get All Payments Error:', error);
-        res.status(500).json({ message: 'Server error while retrieving all payments' });
+        console.error('CRITICAL: Get All Payments Error:', error);
+        res.status(500).json({ message: 'Error retrieving payment data' });
     }
 };
 
 exports.updatePaymentStatus = async (req, res) => {
     try {
         const { status } = req.body;
+        const validStatuses = ['approved', 'rejected'];
         
-        if (!['approved', 'rejected'].includes(status)) {
-            return res.status(400).json({ message: 'Invalid status update string' });
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ message: 'Invalid status' });
         }
 
         const payment = await Payment.findById(req.params.id);
         if (!payment) {
-            return res.status(404).json({ message: 'Payment target not found' });
+            return res.status(404).json({ message: 'Payment record not found' });
         }
 
+        // Apply the status update
         payment.status = status;
         await payment.save();
 
-        res.status(200).json({ message: `Payment ${status} successfully`, payment });
+        console.log(`✅ Payment ${req.params.id} updated to ${status}`);
+        res.status(200).json({ message: `Success: Payment ${status}`, payment });
     } catch (error) {
-        console.error('Update Payment Status Error:', error);
-        res.status(500).json({ message: 'Server error while updating payment status' });
+        console.error('CRITICAL: Update Payment Status Error:', error);
+        res.status(500).json({ message: 'Server error during status update' });
     }
 };

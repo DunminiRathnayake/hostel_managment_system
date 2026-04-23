@@ -13,7 +13,13 @@ const registrationSchema = new mongoose.Schema({
     nicBackImage: { type: String },
     qrToken: { type: String, unique: true, sparse: true },
     status: { type: String, enum: ['approved', 'pending'], default: 'approved' },
-    isActive: { type: Boolean, default: true }
+    isActive: { type: Boolean, default: true },
+    loginHistory: [
+        {
+            loginTime: { type: Date, default: Date.now },
+            ipAddress: { type: String }
+        }
+    ]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Registration', registrationSchema);

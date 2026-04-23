@@ -94,16 +94,83 @@
     font-family: inherit !important;
 }
 
-#qr-reader-kiosk select {
-    padding: 0.6rem;
-    border-radius: 8px;
-    border: 1px solid #334155;
-    background: #1e293b;
-    color: white;
-    margin-bottom: 1rem;
-    font-family: inherit;
+.camera-selector-container {
     width: 100%;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.camera-label {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding-left: 0.5rem;
+}
+
+.camera-select-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.camera-select-wrapper select {
+    width: 100%;
+    padding: 1rem 3rem 1rem 1.2rem;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(30, 41, 59, 0.6);
+    color: white;
+    font-family: inherit;
+    font-size: 1rem;
+    appearance: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+}
+
+.camera-select-wrapper select:hover {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(56, 189, 248, 0.4);
+}
+
+.camera-select-wrapper select:focus {
     outline: none;
+    border-color: #38bdf8;
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+}
+
+.camera-select-icon {
+    position: absolute;
+    right: 1.2rem;
+    pointer-events: none;
+    color: #38bdf8;
+    font-size: 1.2rem;
+}
+
+.refresh-cameras-btn {
+    background: transparent;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    color: #94a3b8;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: fit-content;
+    align-self: flex-end;
+    transition: all 0.2s ease;
+}
+
+.refresh-cameras-btn:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* Overlays / Alerts */
@@ -231,3 +298,31 @@
     font-size: 0.8rem;
     font-weight: 700;
 }
+
+.retry-btn {
+    margin-top: 1.5rem;
+    padding: 0.8rem 2rem;
+    background: white;
+    color: #dc2626;
+    border: none;
+    border-radius: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
+    pointer-events: auto;
+}
+
+.retry-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    background: #f8fafc;
+}
+
+.retry-btn:active {
+    transform: translateY(0);
+}
+

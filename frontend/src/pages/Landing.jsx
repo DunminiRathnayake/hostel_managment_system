@@ -1,8 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import axiosInstance from '../api/axios';
 import './Landing.css';
 
 const Landing = () => {
+    const [averageData, setAverageData] = useState({ average: 0, total: 0 });
     // Native Intersection Observer for Stripe/Linear scroll reveals without third-party dependencies crashing Vite
     useEffect(() => {
         const observer = new IntersectionObserver((entries) => {
@@ -15,6 +17,17 @@ const Landing = () => {
         }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 
         document.querySelectorAll('.scroll-animate').forEach(el => observer.observe(el));
+
+        const fetchAverage = async () => {
+            try {
+                const res = await axiosInstance.get('/reviews/average');
+                setAverageData(res.data);
+            } catch (err) {
+                console.error('Failed to load average rating');
+            }
+        };
+        fetchAverage();
+
         return () => observer.disconnect();
     }, []);
 
@@ -31,6 +44,12 @@ const Landing = () => {
                         <h1 className="hero-title scroll-animate delay-1">
                             Smart Hostel <br />Management System
                         </h1>
+                        {averageData.total > 0 && (
+                            <div className="hero-rating scroll-animate delay-1-5" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginTop: '-0.5rem', marginBottom: '1.5rem', background: 'rgba(251, 191, 36, 0.1)', padding: '0.5rem 1rem', borderRadius: '999px', width: 'fit-content', border: '1px solid rgba(251, 191, 36, 0.3)' }}>
+                                <span style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '1.1rem' }}>★ {averageData.average}</span>
+                                <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>from {averageData.total} student reviews</span>
+                            </div>
+                        )}
                         <p className="hero-subtitle scroll-animate delay-2">
                             Manage your hostel easily in one place. Streamlined check-ins, instant payments, and seamless communication.
                         </p>
@@ -151,6 +170,32 @@ const Landing = () => {
                         ))}
                     </div>
                 </section>
+
+                {/* Reviews Section */}
+                {(averageData && averageData.total > 0) && (
+                    <section id="reviews" className="reviews-section">
+                        <div className="section-header scroll-animate delay-0">
+                            <h2>What Students Say</h2>
+                            <p>Real feedback from students living in our ecosystem.</p>
+                        </div>
+                        
+                        <div className="landing-reviews-highlight scroll-animate delay-1" style={{ display: 'flex', gap: '2rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '4rem' }}>
+                            <div className="glass-card" style={{ padding: '2rem', flex: '1', minWidth: '300px', textAlign: 'center', border: '1px solid rgba(251, 191, 36, 0.4)', background: 'rgba(251, 191, 36, 0.05)' }}>
+                                <div style={{ fontSize: '4rem', color: '#fbbf24', fontWeight: '900', lineHeight: '1' }}>{averageData.average}</div>
+                                <div style={{ fontSize: '1.5rem', color: '#fbbf24', margin: '0.5rem 0' }}>{'★'.repeat(Math.round(averageData.average))}</div>
+                                <p style={{ color: '#94a3b8', fontSize: '1.1rem', margin: 0 }}>Average Satisfaction</p>
+                                <div style={{ marginTop: '1.5rem' }}>
+                                    <Link to="/visitor" className="btn-secondary" style={{ padding: '0.6rem 1.5rem', fontSize: '1rem', textDecoration: 'none' }}>Read All Reviews</Link>
+                                </div>
+                            </div>
+                            
+                            <div className="glass-card" style={{ padding: '2.5rem', flex: '2', minWidth: '300px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                <h3 style={{ color: '#fff', fontSize: '1.8rem', marginBottom: '1rem' }}>Transparent & Verified</h3>
+                                <p style={{ color: '#94a3b8', fontSize: '1.1rem', lineHeight: '1.6', margin: 0 }}> Every review is from a registered student who has lived in the hostel. We believe in transparency to help new students make the best choice. </p>
+                            </div>
+                        </div>
+                    </section>
+                )}
 
                 {/* Call to Action */}
                 <section className="cta-section">

@@ -136,9 +136,11 @@ const StudentQRPanel = () => {
                                             {record.checkOutTime ? new Date(record.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
                                         </td>
                                         <td style={{ padding: '1rem 2rem' }}>
-                                            {record.isLate 
-                                                ? <span className="badge" style={{ background: '#fee2e2', color: '#ef4444' }}>Late Entry</span>
-                                                : <span className="badge" style={{ background: '#dcfce7', color: '#10b981' }}>On Time</span>
+                                            {record.isLateCheckOut
+                                                ? <span className="badge" style={{ background: '#fee2e2', color: '#ef4444' }}>Late Checkout</span>
+                                                : record.isLate 
+                                                    ? <span className="badge" style={{ background: '#fee2e2', color: '#ef4444' }}>Late Entry</span>
+                                                    : <span className="badge" style={{ background: '#dcfce7', color: '#10b981' }}>On Time</span>
                                             }
                                         </td>
                                     </tr>

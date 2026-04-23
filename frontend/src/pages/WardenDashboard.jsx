@@ -10,6 +10,7 @@ import BookingsPanel from '../components/warden/BookingsPanel';
 import CheckInsPanel from '../components/warden/CheckInsPanel';
 import GalleryPanel from '../components/warden/GalleryPanel';
 import CleaningPanel from '../components/warden/CleaningPanel';
+import ReviewsPanel from '../components/warden/ReviewsPanel';
 import './WardenDashboard.css';
 
 const WardenDashboard = () => {
@@ -33,6 +34,7 @@ const WardenDashboard = () => {
             case 'checkins': return <CheckInsPanel />;
             case 'gallery': return <GalleryPanel />;
             case 'cleaning': return <CleaningPanel />;
+            case 'reviews': return <ReviewsPanel />;
             default: return <SummaryOverview />;
         }
     };
@@ -45,15 +47,16 @@ const WardenDashboard = () => {
                     <p className="user-badge">{user?.name} (Warden)</p>
                 </div>
                 <nav className="sidebar-nav">
-                    <button className={activeTab === 'overview' ? 'active' : ''} onClick={() => setActiveTab('overview')}>Dashboard</button>
-                    <button className={activeTab === 'students' ? 'active' : ''} onClick={() => setActiveTab('students')}>Students</button>
-                    <button className={activeTab === 'rooms' ? 'active' : ''} onClick={() => setActiveTab('rooms')}>Rooms</button>
-                    <button className={activeTab === 'cleaning' ? 'active' : ''} onClick={() => setActiveTab('cleaning')}>Cleaning</button>
-                    <button className={activeTab === 'payments' ? 'active' : ''} onClick={() => setActiveTab('payments')}>Payments</button>
-                    <button className={activeTab === 'complaints' ? 'active' : ''} onClick={() => setActiveTab('complaints')}>Complaints</button>
-                    <button className={activeTab === 'bookings' ? 'active' : ''} onClick={() => setActiveTab('bookings')}>Visitor Bookings</button>
-                    <button className={activeTab === 'checkins' ? 'active' : ''} onClick={() => setActiveTab('checkins')}>Check-ins</button>
-                    <button className={activeTab === 'gallery' ? 'active' : ''} onClick={() => setActiveTab('gallery')}>Gallery Setup</button>
+                    <button className={activeTab === 'overview' ? 'active' : ''} onClick={() => setActiveTab('overview')}>📊 Dashboard</button>
+                    <button className={activeTab === 'students' ? 'active' : ''} onClick={() => setActiveTab('students')}>👨‍🎓 Students</button>
+                    <button className={activeTab === 'rooms' ? 'active' : ''} onClick={() => setActiveTab('rooms')}>🏢 Rooms</button>
+                    <button className={activeTab === 'cleaning' ? 'active' : ''} onClick={() => setActiveTab('cleaning')}>🧹 Cleaning</button>
+                    <button className={activeTab === 'payments' ? 'active' : ''} onClick={() => setActiveTab('payments')}>💰 Payments</button>
+                    <button className={activeTab === 'complaints' ? 'active' : ''} onClick={() => setActiveTab('complaints')}>📢 Complaints</button>
+                    <button className={activeTab === 'bookings' ? 'active' : ''} onClick={() => setActiveTab('bookings')}>🎟️ Visitor Bookings</button>
+                    <button className={activeTab === 'checkins' ? 'active' : ''} onClick={() => setActiveTab('checkins')}>🤳 Check-ins</button>
+                    <button className={activeTab === 'gallery' ? 'active' : ''} onClick={() => setActiveTab('gallery')}>🖼️ Gallery Setup</button>
+                    <button className={activeTab === 'reviews' ? 'active' : ''} onClick={() => setActiveTab('reviews')}>⭐ Student Reviews</button>
                 </nav>
                 <div className="sidebar-footer">
                     <button className="logout-btn" onClick={handleLogout}>Logout</button>

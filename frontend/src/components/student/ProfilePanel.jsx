@@ -4,7 +4,7 @@ import { AuthContext } from '../../context/AuthContext';
 
 const ProfilePanel = () => {
     const { login } = useContext(AuthContext);
-    const [profile, setProfile] = useState({ name: '', email: '', campus: '', parentName: '', parentPhone: '', studentPhone: '', nicFront: '', nicBack: '' });
+    const [profile, setProfile] = useState({ fullName: '', email: '', campus: '', emergencyContactName: '', emergencyPhone: '', studentPhone: '', nicFrontImage: '', nicBackImage: '' });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
@@ -16,14 +16,14 @@ const ProfilePanel = () => {
             try {
                 const res = await axiosInstance.get('/users/profile');
                 setProfile({
-                    name: res.data.name || '',
+                    fullName: res.data.fullName || res.data.name || '',
                     email: res.data.email || '',
                     campus: res.data.campus || '',
-                    parentName: res.data.parentName || '',
-                    parentPhone: res.data.parentPhone || '',
+                    emergencyContactName: res.data.emergencyContactName || res.data.parentName || '',
+                    emergencyPhone: res.data.emergencyPhone || res.data.parentPhone || '',
                     studentPhone: res.data.studentPhone || '',
-                    nicFront: res.data.nicFront || '',
-                    nicBack: res.data.nicBack || ''
+                    nicFrontImage: res.data.nicFrontImage || res.data.nicFront || '',
+                    nicBackImage: res.data.nicBackImage || res.data.nicBack || ''
                 });
             } catch (err) { }
             finally { setLoading(false); }
@@ -35,19 +35,12 @@ const ProfilePanel = () => {
         e.preventDefault();
 
         // Validations
-        const phoneRegex = /^[0-9]{10}$/;
-        if (profile.studentPhone && !phoneRegex.test(profile.studentPhone.replace(/[^0-9]/g, ''))) {
-            return alert('Please enter a valid 10-digit Student Phone number.');
+        const phoneRegex = /^\d{10}$/;
+        if (profile.studentPhone && !phoneRegex.test(profile.studentPhone)) {
+            return alert('Student Phone number must be exactly 10 digits.');
         }
-        if (profile.parentPhone && !phoneRegex.test(profile.parentPhone.replace(/[^0-9]/g, ''))) {
-            return alert('Please enter a valid 10-digit Emergency Phone number.');
-        }
-
-        if (!profile.nicFront && !nicFrontConfig) {
-            return alert('NIC Front Image is required.');
-        }
-        if (!profile.nicBack && !nicBackConfig) {
-            return alert('NIC Back Image is required.');
+        if (profile.emergencyPhone && !phoneRegex.test(profile.emergencyPhone)) {
+            return alert('Emergency Phone number must be exactly 10 digits.');
         }
 
         setSaving(true);
@@ -55,27 +48,27 @@ const ProfilePanel = () => {
             const formData = new FormData();
             Object.keys(profile).forEach(key => {
                 // Avoid rewriting unchanged image strings as "null" files
-                if (key !== 'nicFront' && key !== 'nicBack') {
+                if (key !== 'nicFrontImage' && key !== 'nicBackImage') {
                     formData.append(key, profile[key]);
                 }
             });
             if (nicFrontConfig) formData.append('nicFront', nicFrontConfig);
             if (nicBackConfig) formData.append('nicBack', nicBackConfig);
 
-            const res = await axiosInstance.put('/users/profile', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            // Let browser set the multipart boundary implicitly by avoiding explicit Content-Type headers
+            const res = await axiosInstance.put('/users/profile', formData);
             alert('Done! Profile updated.');
-            // Update context without erasing the core `role` property needed natively for Dashboard routing organically
+            
+            // Update context without erasing the core `role` property
             const token = localStorage.getItem('token');
             const currentUser = JSON.parse(localStorage.getItem('user'));
-            const updatedUser = { ...currentUser, name: profile.name }; // Safely merge natively seamlessly 
+            const updatedUser = { ...currentUser, name: res.data.fullName || res.data.name }; 
             login(updatedUser, token);
             
             setProfile({
                 ...profile,
-                nicFront: res.data.nicFront || profile.nicFront,
-                nicBack: res.data.nicBack || profile.nicBack
+                nicFrontImage: res.data.nicFrontImage || profile.nicFrontImage,
+                nicBackImage: res.data.nicBackImage || profile.nicBackImage
             });
         } catch (err) { alert('Failed to update profile'); }
         finally { setSaving(false); }
@@ -90,41 +83,42 @@ const ProfilePanel = () => {
                 <form onSubmit={handleUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                     <div className="form-group-alt">
                         <label>Full Name</label>
-                        <input type="text" value={profile.name} onChange={e => setProfile({ ...profile, name: e.target.value })} required />
+                        <input type="text" value={profile.fullName} onChange={e => setProfile({ ...profile, fullName: e.target.value })} required />
                     </div>
                     <div className="form-group-alt">
-                        <label>Email</label>
-                        <input type="email" value={profile.email} disabled style={{ opacity: 0.6 }} />
+                        <label>Email ID</label>
+                        <input type="email" value={profile.email} disabled style={{ opacity: 0.6, cursor: 'not-allowed' }} title="Emails cannot be modified post-registration" />
                     </div>
                     <div className="form-group-alt">
                         <label>Campus</label>
-                        <input type="text" value={profile.campus} onChange={e => setProfile({ ...profile, campus: e.target.value })} placeholder="e.g. SLIIT,CINEC" />
+                        <input type="text" value={profile.campus} onChange={e => setProfile({ ...profile, campus: e.target.value })} placeholder="e.g. SLIIT, CINEC" />
                     </div>
                     <div className="form-group-alt">
                         <label>Student Phone</label>
-                        <input type="text" value={profile.studentPhone} onChange={e => setProfile({ ...profile, studentPhone: e.target.value })} placeholder=" 07XXXXXXXX" />
+                        <input type="tel" value={profile.studentPhone} onChange={e => setProfile({ ...profile, studentPhone: e.target.value })} placeholder="07XXXXXXXX" />
                     </div>
                     <div className="form-group-alt">
                         <label>Emergency Contact Name</label>
-                        <input type="text" value={profile.parentName} onChange={e => setProfile({ ...profile, parentName: e.target.value })} placeholder="Parent's Name" />
+                        <input type="text" value={profile.emergencyContactName} onChange={e => setProfile({ ...profile, emergencyContactName: e.target.value })} placeholder="Parent/Guardian Name" />
                     </div>
                     <div className="form-group-alt">
                         <label>Emergency Phone</label>
-                        <input type="text" value={profile.parentPhone} onChange={e => setProfile({ ...profile, parentPhone: e.target.value })} placeholder="07XXXXXXXX" />
+                        <input type="tel" value={profile.emergencyPhone} onChange={e => setProfile({ ...profile, emergencyPhone: e.target.value })} placeholder="07XXXXXXXX" />
                     </div>
 
                     <div className="form-group-alt" style={{ marginTop: '1rem' }}>
                         <label>NIC Front Image</label>
-                        {profile.nicFront && <img src={`${API_BASE_URL}${profile.nicFront}`} alt="NIC Front" style={{ maxWidth: '200px', borderRadius: '8px', marginBottom: '0.5rem' }} />}
+                        {profile.nicFrontImage && <img src={`${API_BASE_URL}${profile.nicFrontImage}`} alt="NIC Front" style={{ maxWidth: '200px', borderRadius: '8px', marginBottom: '0.5rem' }} />}
                         <input type="file" accept="image/*" onChange={e => setNicFrontConfig(e.target.files[0])} />
                     </div>
                     <div className="form-group-alt">
                         <label>NIC Back Image</label>
-                        {profile.nicBack && <img src={`${API_BASE_URL}${profile.nicBack}`} alt="NIC Back" style={{ maxWidth: '200px', borderRadius: '8px', marginBottom: '0.5rem' }} />}
+                        {profile.nicBackImage && <img src={`${API_BASE_URL}${profile.nicBackImage}`} alt="NIC Back" style={{ maxWidth: '200px', borderRadius: '8px', marginBottom: '0.5rem' }} />}
                         <input type="file" accept="image/*" onChange={e => setNicBackConfig(e.target.files[0])} />
                     </div>
+                    
                     <button type="submit" disabled={saving} className="action-btn" style={{ marginTop: '1.5rem', padding: '1rem', background: '#8b5cf6' }}>
-                        {saving ? 'Saving...' : 'Save Profile'}
+                        {saving ? 'Saving changes...' : 'Save Profile Changes'}
                     </button>
                 </form>
             </div>

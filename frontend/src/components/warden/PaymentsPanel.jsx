@@ -20,7 +20,10 @@ const PaymentsPanel = () => {
         try {
             await axiosInstance.put(`/payments/${id}`, { status });
             fetchPayments();
-        } catch (err) { alert('Something went wrong. Please try again.'); }
+        } catch (err) { 
+            const errorMsg = err.response?.data?.message || 'Something went wrong. Please try again.';
+            alert(errorMsg); 
+        }
     };
 
     if (loading) return <div style={{color:'#64748b'}}>Loading payments...</div>;

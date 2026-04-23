@@ -114,6 +114,7 @@ exports.getStudentsList = async (req, res) => {
                 parentName: reg.emergencyContactName,
                 parentPhone: reg.emergencyPhone,
                 assignedRoom: alloc ? alloc.roomId.roomNumber : 'Unassigned',
+                assignedRoomId: alloc ? alloc.roomId._id : null,
                 status: reg.isActive === false ? 'inactive' : 'active'
             });
             processedEmails.add(reg.email.toLowerCase());
@@ -139,6 +140,7 @@ exports.getStudentsList = async (req, res) => {
                 parentName: profile?.emergencyContactName || 'N/A',
                 parentPhone: profile?.emergencyPhone || 'N/A',
                 assignedRoom: alloc ? alloc.roomId.roomNumber : 'Unassigned',
+                assignedRoomId: alloc ? alloc.roomId._id : null,
                 status: s.isActive === false ? 'inactive' : 'active'
             });
         }
@@ -174,7 +176,10 @@ exports.getMyQR = async (req, res) => {
             
             let profile = await Profile.findOne({ user: req.user.id });
             if (!profile) {
-                profile = new Profile({ user: req.user.id, name: 'Student' });
+                profile = new Profile({ 
+                    user: req.user.id, 
+                    fullName: req.user.fullName || 'Student'
+                });
             }
 
             token = profile.qrToken;
@@ -246,5 +251,46 @@ exports.deactivateStudent = async (req, res) => {
     } catch (error) {
         console.error('Deactivate Student Error:', error);
         res.status(500).json({ message: 'Internal server error during deactivation' });
+    }
+};
+
+exports.getLoginLogs = async (req, res) => {
+    try {
+        const [users, registrations] = await Promise.all([
+            User.find({ loginHistory: { $exists: true, $not: { $size: 0 } } }).select('email loginHistory'),
+            Registration.find({ loginHistory: { $exists: true, $not: { $size: 0 } } }).select('email fullName loginHistory')
+        ]);
+
+        let allLogs = [];
+
+        users.forEach(u => {
+            u.loginHistory.forEach(log => {
+                allLogs.push({
+                    username: u.email.split('@')[0],
+                    email: u.email,
+                    loginTime: log.loginTime,
+                    ipAddress: log.ipAddress
+                });
+            });
+        });
+
+        registrations.forEach(r => {
+            r.loginHistory.forEach(log => {
+                allLogs.push({
+                    username: r.fullName,
+                    email: r.email,
+                    loginTime: log.loginTime,
+                    ipAddress: log.ipAddress
+                });
+            });
+        });
+
+        // Sort by time newest first
+        allLogs.sort((a, b) => new Date(b.loginTime) - new Date(a.loginTime));
+
+        res.status(200).json(allLogs.slice(0, 100));
+    } catch (error) {
+        console.error('Fetch Login Logs Error:', error);
+        res.status(500).json({ message: 'Internal server error while retrieving login logs' });
     }
 };

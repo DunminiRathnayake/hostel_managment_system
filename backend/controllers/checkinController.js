@@ -62,8 +62,7 @@ exports.scanQR = async (req, res) => {
             const SIXTEEN_HOURS = 16 * 60 * 60 * 1000;
 
             if (sessionDurationMs < SIXTEEN_HOURS) {
-                const lateHour = parseInt(process.env.LATE_HOUR || '20', 10);
-                const isLateCheckOut = now.getHours() >= lateHour || now.getHours() < 6;
+                const isLateCheckOut = now.getHours() >= 21 || now.getHours() < 4;
 
                 latestRecord.checkOutTime = now;
                 latestRecord.isLateCheckOut = isLateCheckOut;
@@ -75,8 +74,7 @@ exports.scanQR = async (req, res) => {
         }
 
         // CheckIn Handler
-        const lateHour = parseInt(process.env.LATE_HOUR || '20', 10);
-        const isLate = now.getHours() >= lateHour || now.getHours() < 6;
+        const isLate = now.getHours() >= 22 || now.getHours() < 6;
 
         const newCheckIn = await CheckIn.create({
             studentId,

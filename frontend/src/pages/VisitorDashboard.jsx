@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axiosInstance from '../api/axios';
 
 const VisitorDashboard = () => {
-    const [activeTab, setActiveTab] = useState('book'); // 'book' or 'status'
+    const [activeTab, setActiveTab] = useState('book'); // 'book', 'status', or 'reviews'
 
     // Booking Form State
     const [visitorName, setVisitorName] = useState('');
@@ -25,6 +25,11 @@ const VisitorDashboard = () => {
     const [checking, setChecking] = useState(false);
     const [statusError, setStatusError] = useState('');
 
+    // Reviews State
+    const [reviewsData, setReviewsData] = useState([]);
+    const [averageData, setAverageData] = useState({ average: 0, total: 0 });
+    const [loadingReviews, setLoadingReviews] = useState(false);
+
     useEffect(() => {
         const fetchStudents = async () => {
             if (type !== 'student_visit') return;
@@ -36,6 +41,27 @@ const VisitorDashboard = () => {
         };
         fetchStudents();
     }, [type]);
+
+    // Fetch reviews and average when tab is active
+    useEffect(() => {
+        const fetchReviews = async () => {
+            if (activeTab !== 'reviews') return;
+            setLoadingReviews(true);
+            try {
+                const [reviewsRes, avgRes] = await Promise.all([
+                    axiosInstance.get('/reviews'),
+                    axiosInstance.get('/reviews/average')
+                ]);
+                setReviewsData(reviewsRes.data);
+                setAverageData(avgRes.data);
+            } catch (err) {
+                console.error('Failed to load public reviews');
+            } finally {
+                setLoadingReviews(false);
+            }
+        };
+        fetchReviews();
+    }, [activeTab]);
 
     const handleBook = async (e) => {
         e.preventDefault();
@@ -111,12 +137,53 @@ const VisitorDashboard = () => {
                         style={{ flex: 1, padding: '1rem', border: 'none', borderRadius: '8px', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.3s', background: activeTab === 'status' ? 'white' : 'transparent', color: activeTab === 'status' ? '#3b82f6' : '#64748b', boxShadow: activeTab === 'status' ? '0 4px 6px -1px rgba(0,0,0,0.1)' : 'none' }}>
                         🔍 Check Status
                     </button>
+                    <button
+                        onClick={() => { setActiveTab('reviews'); }}
+                        style={{ flex: 1, padding: '1rem', border: 'none', borderRadius: '8px', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.3s', background: activeTab === 'reviews' ? 'white' : 'transparent', color: activeTab === 'reviews' ? '#3b82f6' : '#64748b', boxShadow: activeTab === 'reviews' ? '0 4px 6px -1px rgba(0,0,0,0.1)' : 'none' }}>
+                        ⭐ Reviews
+                    </button>
                 </div>
 
                 {/* Content Panels */}
                 <div style={{ background: 'white', padding: '2.5rem', borderRadius: '24px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' }}>
 
-                    {activeTab === 'book' ? (
+                    {activeTab === 'reviews' ? (
+                        <div style={{ animation: 'fadeIn 0.3s ease' }}>
+                            <h2 style={{ fontSize: '1.8rem', color: '#1e293b', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                ⭐ Public Ratings & Reviews
+                            </h2>
+                            
+                            {loadingReviews ? (
+                                <p style={{ color: '#64748b' }}>Loading reviews...</p>
+                            ) : (
+                                <>
+                                    <div style={{ background: '#f8fafc', padding: '2rem', borderRadius: '16px', border: '1px solid #e2e8f0', textAlign: 'center', marginBottom: '2rem' }}>
+                                        <h3 style={{ fontSize: '3rem', color: '#fbbf24', margin: '0' }}>{averageData.average} <span style={{ fontSize: '1.5rem', color: '#cbd5e1' }}>/ 5</span></h3>
+                                        <p style={{ color: '#64748b', fontSize: '1.1rem', marginTop: '0.5rem' }}>Based on {averageData.total} certified student reviews</p>
+                                    </div>
+
+                                    {reviewsData.length === 0 ? (
+                                        <p style={{ textAlign: 'center', color: '#94a3b8', fontStyle: 'italic', padding: '2rem' }}>No reviews have been posted yet.</p>
+                                    ) : (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                            {reviewsData.map(r => (
+                                                <div key={r._id} style={{ background: 'white', padding: '1.5rem', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', textAlign: 'left' }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                                        <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#1e293b' }}>{r.studentName}</h4>
+                                                        <span style={{ color: '#fbbf24', fontSize: '1.2rem', letterSpacing: '2px' }}>
+                                                            {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
+                                                        </span>
+                                                    </div>
+                                                    <p style={{ margin: 0, color: '#475569', lineHeight: '1.5' }}>"{r.comment}"</p>
+                                                    <p style={{ margin: '1rem 0 0 0', color: '#94a3b8', fontSize: '0.85rem' }}>{new Date(r.createdAt).toLocaleDateString()}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    ) : activeTab === 'book' ? (
                         <div style={{ animation: 'fadeIn 0.3s ease' }}>
                             <h2 style={{ fontSize: '1.8rem', color: '#1e293b', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                                 Book Your Visit

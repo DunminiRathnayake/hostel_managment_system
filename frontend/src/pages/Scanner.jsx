@@ -20,9 +20,16 @@ const Scanner = () => {
     const [manualStudentId, setManualStudentId] = useState('');
     const [showAdminMode, setShowAdminMode] = useState(false);
 
+    const audioCtxRef = useRef(null);
+
     const playSoundEffect = (type) => {
         try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            if (!audioCtxRef.current) {
+                audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            const ctx = audioCtxRef.current;
+            if (ctx.state === 'suspended') ctx.resume();
+
             const gainNode = ctx.createGain();
             gainNode.connect(ctx.destination);
             gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
@@ -140,31 +147,61 @@ const Scanner = () => {
         processPayload({ token: manualStudentId }, 'manual');
     };
 
-    // Initialize Cameras
-    useEffect(() => {
-        Html5Qrcode.getCameras().then(devices => {
+    const initCamerasRef = useRef(false);
+
+    const initializeScanner = async (requestPermission = false) => {
+        if (initCamerasRef.current) return;
+        initCamerasRef.current = true;
+        
+        try {
+            // Some browsers require a user gesture or a started stream to show labels
+            const devices = await Html5Qrcode.getCameras();
+            console.log("Detected cameras:", devices);
+            
             if (devices && devices.length > 0) {
                 setCameras(devices);
-                const backCamera = devices.find(d =>
-                    d.label.toLowerCase().includes('back') ||
-                    d.label.toLowerCase().includes('environment')
-                );
-                setActiveCameraId(backCamera ? backCamera.id : devices[0].id);
+                
+                // Only set active camera if not already set
+                if (!activeCameraId) {
+                    const backCamera = devices.find(d =>
+                        d.label.toLowerCase().includes('back') ||
+                        d.label.toLowerCase().includes('environment') ||
+                        d.label.toLowerCase().includes('rear')
+                    );
+                    setActiveCameraId(backCamera ? backCamera.id : devices[0].id);
+                }
+            } else if (requestPermission) {
+                // If no cameras found, try to trigger permission dialog by starting a dummy scanner
+                // This is a last resort to get the browser to reveal hardware
+                triggerOverlay('idle', 'Camera Access', 'Requesting hardware access...', '📸');
             } else {
-                triggerOverlay('error', 'Camera Error', 'No camera detected.', '❌');
+                console.error("No cameras detected by Html5Qrcode");
+                // Don't error out immediately, let the user try to refresh
             }
-        }).catch(err => {
-            triggerOverlay('error', 'Camera Error', 'Please allow camera access.', '❌');
-        });
+        } catch (err) {
+            console.error("Html5Qrcode.getCameras error:", err);
+            if (requestPermission) {
+                triggerOverlay('error', 'Camera Error', 'Please allow camera access in your browser settings.', '❌');
+            }
+        } finally {
+            initCamerasRef.current = false;
+        }
+    };
+
+    // Initialize Cameras
+    useEffect(() => {
+        initializeScanner();
 
         return () => {
             if (scannerRef.current) {
                 try {
-                    if (scannerRef.current.isScanning) {
-                        scannerRef.current.stop().then(() => scannerRef.current.clear()).catch(e => { });
-                    } else {
-                        scannerRef.current.clear();
-                    }
+                    const stopScanner = async () => {
+                        if (scannerRef.current.isScanning) {
+                            await scannerRef.current.stop();
+                        }
+                        await scannerRef.current.clear();
+                    };
+                    stopScanner();
                 } catch (e) { }
             }
         };
@@ -174,38 +211,45 @@ const Scanner = () => {
     useEffect(() => {
         if (!activeCameraId) return;
 
-        const html5QrCode = new Html5Qrcode("qr-reader-kiosk");
-        scannerRef.current = html5QrCode;
+        let html5QrCode;
+        
+        const initTimeout = setTimeout(() => {
+            html5QrCode = new Html5Qrcode("qr-reader-kiosk");
+            scannerRef.current = html5QrCode;
 
-        html5QrCode.start(
-            activeCameraId,
-            { fps: 10, qrbox: { width: 300, height: 300 } },
-            (decodedText) => {
-                try {
-                    const qrData = JSON.parse(decodedText);
-                    if (!qrData.token) throw new Error();
-                    processPayload({ token: qrData.token }, 'optical');
-                } catch (e) {
-                    if (!processingRef.current) {
-                        processingRef.current = true;
-                        if (scannerRef.current && scannerRef.current.getState() === 2) {
-                            try { scannerRef.current.pause(true); } catch (err) { }
+            html5QrCode.start(
+                activeCameraId,
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                (decodedText) => {
+                    try {
+                        const qrData = JSON.parse(decodedText);
+                        if (!qrData.token) throw new Error();
+                        processPayload({ token: qrData.token }, 'optical');
+                    } catch (e) {
+                        if (!processingRef.current) {
+                            processingRef.current = true;
+                            if (scannerRef.current && scannerRef.current.getState() === 2) {
+                                try { scannerRef.current.pause(true); } catch (err) { }
+                            }
+                            triggerOverlay('error', 'Invalid Input', 'Invalid QR Code Format natively.', '❌');
                         }
-                        triggerOverlay('error', 'Invalid Input', 'Invalid QR Code Format natively.', '❌');
                     }
-                }
-            },
-            () => { } // Ignore scan noise quietly
-        ).catch(err => {
-            console.warn("Optical hardware load error:", err);
-        });
+                },
+                () => { } // Ignore scan noise quietly
+            ).catch(err => {
+                console.warn("Optical hardware load error:", err);
+            });
+        }, 100);
 
         return () => {
+            clearTimeout(initTimeout);
             try {
-                if (html5QrCode.isScanning) {
-                    html5QrCode.stop().then(() => html5QrCode.clear()).catch(e => { });
-                } else {
-                    html5QrCode.clear();
+                if (html5QrCode) {
+                    if (html5QrCode.isScanning) {
+                        html5QrCode.stop().then(() => html5QrCode.clear()).catch(e => { });
+                    } else {
+                        html5QrCode.clear();
+                    }
                 }
             } catch (e) { }
         };
@@ -228,19 +272,37 @@ const Scanner = () => {
 
             <div className="kiosk-body">
                 <div className="scanner-card-kiosk">
-                    {/* Hardware Dropdown */}
-                    {cameras.length > 0 && (
-                        <select
-                            value={activeCameraId}
-                            onChange={(e) => setActiveCameraId(e.target.value)}
-                        >
-                            {cameras.map(camera => (
-                                <option key={camera.id} value={camera.id}>
-                                    {camera.label || `Camera ${camera.id}`}
-                                </option>
-                            ))}
-                        </select>
-                    )}
+                    {/* Hardware Selection Section */}
+                    <div className="camera-selector-container">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span className="camera-label">Capture Hardware</span>
+                            <button 
+                                className="refresh-cameras-btn"
+                                onClick={() => initializeScanner(true)}
+                                title="Refresh camera list"
+                            >
+                                <span>🔄</span> Refresh
+                            </button>
+                        </div>
+                        
+                        <div className="camera-select-wrapper">
+                            <select
+                                value={activeCameraId}
+                                onChange={(e) => setActiveCameraId(e.target.value)}
+                            >
+                                {cameras.length > 0 ? (
+                                    cameras.map(camera => (
+                                        <option key={camera.id} value={camera.id}>
+                                            {camera.label || `Unnamed Camera (${camera.id.substring(0, 8)}...)`}
+                                        </option>
+                                    ))
+                                ) : (
+                                    <option value="">No cameras found - Click Refresh</option>
+                                )}
+                            </select>
+                            <div className="camera-select-icon">▼</div>
+                        </div>
+                    </div>
 
                     {/* Native Camera Output */}
                     <div id="qr-reader-kiosk" style={{ width: '100%' }}></div>
@@ -251,6 +313,18 @@ const Scanner = () => {
                             <div className="kiosk-icon">{overlayMessage.icon}</div>
                             <div className="kiosk-message">{overlayMessage.title}</div>
                             <div className="kiosk-submessage">{overlayMessage.sub}</div>
+                            {status === 'error' && (
+                                <button 
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setStatus('idle');
+                                        initializeScanner();
+                                    }}
+                                    className="retry-btn"
+                                >
+                                    Try Again
+                                </button>
+                            )}
                         </div>
                     ) : (
                         <div className="kiosk-overlay overlay-idle" style={{ opacity: 0.1 }}>

@@ -20,7 +20,13 @@ const userSchema = new mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true
-    }
+    },
+    loginHistory: [
+        {
+            loginTime: { type: Date, default: Date.now },
+            ipAddress: { type: String }
+        }
+    ]
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

@@ -58,7 +58,15 @@ const registerUser = async (req, res) => {
             nicFrontImage,
             nicBackImage,
             qrToken,
-            status: 'approved' // Automatically approved as requested earlier
+            status: 'approved'
+        });
+
+        // 5. Create a shadow User entry for unified login tracking in the "Users" tab
+        await User.create({
+            email,
+            password: hashedPassword,
+            role: 'student',
+            isActive: true
         });
 
         // Return success message
@@ -136,14 +144,21 @@ const loginUser = async (req, res) => {
 
         const finalName = profileName ? profileName : "Admin User";
 
-        // Register visual login instance permanently targeting native log schemas
-        await Login.create({
-            user: user._id,
-            name: finalName,
-            email: user.email,
-            ipAddress: clientIp,
-            loginTime: new Date()
+        // Find or create the user entry in the 'users' collection to save the log
+        let userEntry = await User.findOne({ email: user.email });
+        if (!userEntry) {
+            userEntry = await User.create({
+                email: user.email,
+                password: user.password,
+                role: user.role
+            });
+        }
+
+        userEntry.loginHistory.push({
+            loginTime: new Date(),
+            ipAddress: clientIp
         });
+        await userEntry.save();
 
         // 5. Return token + user details seamlessly mapped
         console.log(`✅ Success: User logged in - ${user.email}`);

@@ -1,5 +1,7 @@
 const Booking = require('../models/Booking');
 const Profile = require('../models/Profile');
+const Registration = require('../models/Registration');
+const User = require('../models/User');
 
 /**
  * Handle new visitor booking creation.
@@ -43,10 +45,14 @@ exports.createBooking = async (req, res) => {
         }
 
         // Link student name if it's a student visit
-        let finalStudentName;
+        let finalStudentName = 'Unknown Student';
         if (type === 'student_visit') {
-            const profile = await Profile.findOne({ user: studentId });
-            finalStudentName = profile ? profile.name : 'Unknown Student';
+            const [profile, reg, user] = await Promise.all([
+                Profile.findOne({ user: studentId }).lean(),
+                Registration.findById(studentId).lean(),
+                User.findById(studentId).lean()
+            ]);
+            finalStudentName = reg?.fullName || profile?.fullName || profile?.name || user?.email?.split('@')[0] || 'Unknown Student';
         }
 
         const booking = await Booking.create({
@@ -86,10 +92,14 @@ exports.getMyBookings = async (req, res) => {
         // Enrich the results with student names from Profile model
         const bookings = await Promise.all(bookingsRaw.map(async (b) => {
             const bObj = b.toObject();
-            if (bObj.type === 'student_visit' && bObj.studentId && !bObj.studentName) {
+            if (bObj.type === 'student_visit' && bObj.studentId && (!bObj.studentName || bObj.studentName === 'Unknown Student')) {
                 try {
-                    const profile = await Profile.findOne({ user: bObj.studentId._id });
-                    bObj.studentName = profile ? profile.name : 'Unknown Student';
+                    const [profile, reg, user] = await Promise.all([
+                        Profile.findOne({ user: bObj.studentId._id }).lean(),
+                        Registration.findById(bObj.studentId._id).lean(),
+                        User.findById(bObj.studentId._id).lean()
+                    ]);
+                    bObj.studentName = reg?.fullName || profile?.fullName || profile?.name || user?.email?.split('@')[0] || 'Unknown Student';
                 } catch (innerErr) {
                     bObj.studentName = 'Unknown Student';
                 }
@@ -115,9 +125,13 @@ exports.getAllBookings = async (req, res) => {
         
         const bookings = await Promise.all(bookingsRaw.map(async (b) => {
             const bObj = b.toObject();
-            if (bObj.type === 'student_visit' && bObj.studentId && !bObj.studentName) {
-                const profile = await Profile.findOne({ user: bObj.studentId._id });
-                bObj.studentName = profile ? profile.name : 'Unknown Student';
+            if (bObj.type === 'student_visit' && bObj.studentId && (!bObj.studentName || bObj.studentName === 'Unknown Student')) {
+                const [profile, reg, user] = await Promise.all([
+                    Profile.findOne({ user: bObj.studentId._id }).lean(),
+                    Registration.findById(bObj.studentId._id).lean(),
+                    User.findById(bObj.studentId._id).lean()
+                ]);
+                bObj.studentName = reg?.fullName || profile?.fullName || profile?.name || user?.email?.split('@')[0] || 'Unknown Student';
             }
             return bObj;
         }));

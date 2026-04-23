@@ -157,6 +157,32 @@ exports.updateRoomStatus = async (req, res) => {
     }
 };
 
+// @route   PUT /api/rooms/:id/occupancy
+// @desc    Update room occupancy
+// @access  Private/Warden
+exports.updateRoomOccupancy = async (req, res) => {
+    try {
+        const { occupied } = req.body;
+        const room = await Room.findById(req.params.id);
+        if (!room) {
+            return res.status(404).json({ message: 'Room not found' });
+        }
+        
+        if (occupied < 0 || occupied > room.capacity) {
+            return res.status(400).json({ message: 'Invalid occupancy count' });
+        }
+
+        room.currentOccupancy = occupied;
+        room.status = occupied >= room.capacity ? 'occupied' : 'available';
+
+        await room.save();
+        res.status(200).json({ message: 'Room occupancy updated', room });
+    } catch (error) {
+        console.error('Error updating room occupancy:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
 // @route   PUT /api/rooms/:id
 // @desc    Update core room details
 // @access  Private/Warden
