@@ -87,6 +87,45 @@ exports.updateProfile = async (req, res) => {
         res.status(500).json({ message: 'Native server routing execution failure mapped internally.' });
     }
 };
+exports.updateStudentAsWarden = async (req, res) => {
+    try {
+        const { name, email, campus, parentName, parentPhone, studentPhone } = req.body;
+        const studentId = req.params.id;
+
+        if (email) {
+            const existing = await User.findOne({ email, _id: { $ne: studentId } });
+            if (existing) return res.status(400).json({ message: 'Email is already in use by another account.' });
+            await User.findByIdAndUpdate(studentId, { email });
+        }
+
+        let reg = await Registration.findById(studentId);
+        if (reg) {
+            if (name) reg.fullName = name;
+            if (email) reg.email = email;
+            if (campus) reg.campus = campus;
+            if (parentName) reg.emergencyContactName = parentName;
+            if (parentPhone) reg.emergencyPhone = parentPhone;
+            if (studentPhone) reg.studentPhone = studentPhone;
+            await reg.save();
+            return res.status(200).json(reg);
+        }
+
+        let profile = await Profile.findOne({ user: studentId });
+        if (!profile) profile = new Profile({ user: studentId });
+        if (name) profile.fullName = name;
+        if (campus) profile.campus = campus;
+        if (parentName) profile.emergencyContactName = parentName;
+        if (parentPhone) profile.emergencyPhone = parentPhone;
+        if (studentPhone) profile.studentPhone = studentPhone;
+        
+        await profile.save();
+        res.status(200).json(profile);
+
+    } catch (error) {
+        console.error('Update Student Error:', error);
+        res.status(500).json({ message: 'Internal server error while updating student profile.' });
+    }
+};
 
 exports.getStudentsList = async (req, res) => {
     try {

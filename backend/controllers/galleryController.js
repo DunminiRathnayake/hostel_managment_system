@@ -5,8 +5,10 @@ const fs = require('fs');
 exports.getImages = async (req, res) => {
     try {
         const images = await GalleryImage.find().sort('-createdAt');
+        console.log(`[Gallery API] Fetched ${images.length} images. User authenticated? ${!!req.user}`);
         res.status(200).json(images);
     } catch (error) {
+        console.error('[Gallery API] Error:', error);
         res.status(500).json({ message: 'Server Error fetching images' });
     }
 };

@@ -48,8 +48,11 @@ const RoomsPanel = () => {
 
     const fetchRooms = async () => {
         try {
-            const res = await axiosInstance.get('/rooms');
-            setRooms(res.data.rooms || []);
+            const res = await axiosInstance.get(`/rooms?t=${Date.now()}`);
+            const fetchedRooms = res.data.rooms || [];
+            // Sort to display newest rooms first
+            fetchedRooms.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            setRooms(fetchedRooms);
         } catch (err) {
             console.error(err);
         } finally {
@@ -59,7 +62,7 @@ const RoomsPanel = () => {
 
     const fetchStudents = async () => {
         try {
-            const res = await axiosInstance.get('/users/students');
+            const res = await axiosInstance.get(`/users/students?t=${Date.now()}`);
             setStudents(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
             console.error(err);

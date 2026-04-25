@@ -33,9 +33,7 @@ const Navbar = () => {
                 
                 {user ? (
                     <div className="nav-auth-section">
-                        <Link to="/home" className="nav-dashboard-btn">
-                            My Dashboard <span className="role-badge">{user.role}</span>
-                        </Link>
+
                         <Link to="/home" className="nav-profile-block" style={{ textDecoration: 'none' }} title="Go to Dashboard">
                             <div className="nav-avatar">{user?.name ? user.name.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U')}</div>
                             <span className="nav-name">{user?.name ? user.name.split(' ')[0] : 'User'}</span>
@@ -45,10 +43,8 @@ const Navbar = () => {
                         </button>
                     </div>
                 ) : (
-                    <div className="nav-guest-section">
-                        <Link to="/register" className="global-btn" style={{background: 'linear-gradient(135deg, #2563eb, #4f46e5)', color:'white', marginRight:'0.5rem', border:'none', padding:'0.5rem 1.5rem', fontWeight:'600', fontSize:'0.9rem', borderRadius:'999px'}}>Register</Link>
-                        <Link to="/login" className="global-btn" style={{background:'transparent', border: location.pathname === '/' ? '1px solid rgba(96, 165, 250, 0.3)' : '2px solid #3b82f6', color: location.pathname==='/'?'#60a5fa':'#3b82f6', padding:'0.5rem 1.5rem', fontWeight:'600', fontSize:'0.9rem', borderRadius:'999px'}}>Login</Link>
-                    </div>
+                        <div className="nav-guest-section">
+                        </div>
                 )}
             </div>
         </nav>

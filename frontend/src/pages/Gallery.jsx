@@ -7,7 +7,7 @@ const Gallery = () => {
     const [images, setImages] = useState([]);
 
     useEffect(() => {
-        axiosInstance.get('/gallery')
+        axiosInstance.get(`/gallery?t=${Date.now()}`)
             .then(res => setImages(res.data))
             .catch(err => console.error(err));
     }, []);

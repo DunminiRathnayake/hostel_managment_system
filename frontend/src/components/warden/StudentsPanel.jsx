@@ -5,6 +5,9 @@ const StudentsPanel = () => {
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [selectedStudent, setSelectedStudent] = useState(null);
+    const [editForm, setEditForm] = useState({ name: '', email: '', campus: '', studentPhone: '', parentName: '', parentPhone: '' });
 
     const fetchStudents = async () => {
         try {
@@ -28,6 +31,30 @@ const StudentsPanel = () => {
             fetchStudents(); // refresh UI
         } catch (err) {
             alert(err.response?.data?.message || 'Failed to deactivate student');
+        }
+    };
+
+    const handleEditClick = (student) => {
+        setSelectedStudent(student);
+        setEditForm({
+            name: student.name || '',
+            email: student.email || '',
+            campus: student.campus || '',
+            studentPhone: student.studentPhone || '',
+            parentName: student.parentName || '',
+            parentPhone: student.parentPhone || ''
+        });
+        setEditModalOpen(true);
+    };
+
+    const handleUpdateStudent = async (e) => {
+        e.preventDefault();
+        try {
+            await axiosInstance.put(`/users/student/${selectedStudent._id}`, editForm);
+            setEditModalOpen(false);
+            fetchStudents();
+        } catch (err) {
+            alert(err.response?.data?.message || 'Failed to update student profile: ' + err.message);
         }
     };
 
@@ -119,12 +146,20 @@ const StudentsPanel = () => {
                                         </td>
                                         <td style={{ padding: '1.2rem 1.5rem' }}>
                                             {s.status === 'active' && (
-                                                <button 
-                                                    style={{ background: '#ef4444', color: 'white', padding: '0.5rem 1rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem' }}
-                                                    onClick={() => handleDeactivate(s._id)}
-                                                >
-                                                    Remove
-                                                </button>
+                                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                    <button 
+                                                        style={{ background: '#3b82f6', color: 'white', padding: '0.5rem 1rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem' }}
+                                                        onClick={() => handleEditClick(s)}
+                                                    >
+                                                        Edit Profile
+                                                    </button>
+                                                    <button 
+                                                        style={{ background: '#ef4444', color: 'white', padding: '0.5rem 1rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem' }}
+                                                        onClick={() => handleDeactivate(s._id)}
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </div>
                                             )}
                                         </td>
                                     </tr>
@@ -137,7 +172,56 @@ const StudentsPanel = () => {
             <style>{`
                 .fade-in { animation: fadeIn 0.5s ease; }
                 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+                .modal-content { background: white; padding: 2rem; border-radius: 16px; width: 100%; max-width: 500px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+                .input-field { width: 100%; padding: 0.8rem; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 1rem; outline: none; }
+                .input-field:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+                .form-label { display: block; font-weight: 600; color: #475569; margin-bottom: 0.5rem; font-size: 0.9rem; }
             `}</style>
+
+            {editModalOpen && (
+                <div className="modal-overlay" onClick={() => setEditModalOpen(false)}>
+                    <div className="modal-content fade-in" onClick={e => e.stopPropagation()}>
+                        <h2 style={{ marginTop: 0, color: '#1e293b', marginBottom: '1.5rem' }}>Edit Student Profile</h2>
+                        <form onSubmit={handleUpdateStudent}>
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <div style={{ flex: 1 }}>
+                                    <label className="form-label">Full Name</label>
+                                    <input type="text" className="input-field" value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} required />
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <label className="form-label">Email Address</label>
+                                    <input type="email" className="input-field" value={editForm.email} onChange={e => setEditForm({...editForm, email: e.target.value})} required />
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <div style={{ flex: 1 }}>
+                                    <label className="form-label">Campus</label>
+                                    <input type="text" className="input-field" value={editForm.campus} onChange={e => setEditForm({...editForm, campus: e.target.value})} required />
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <label className="form-label">Student Phone</label>
+                                    <input type="text" className="input-field" value={editForm.studentPhone} onChange={e => setEditForm({...editForm, studentPhone: e.target.value})} required />
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <div style={{ flex: 1 }}>
+                                    <label className="form-label">Guardian Name</label>
+                                    <input type="text" className="input-field" value={editForm.parentName} onChange={e => setEditForm({...editForm, parentName: e.target.value})} required />
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <label className="form-label">Guardian Phone</label>
+                                    <input type="text" className="input-field" value={editForm.parentPhone} onChange={e => setEditForm({...editForm, parentPhone: e.target.value})} required />
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
+                                <button type="button" onClick={() => setEditModalOpen(false)} style={{ padding: '0.8rem 1.5rem', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Cancel</button>
+                                <button type="submit" style={{ padding: '0.8rem 1.5rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -43,7 +43,17 @@ const BookingsPanel = () => {
                         {bookings.map(b => (
                             <tr key={b._id}>
                                 <td>{b.visitorName} {b.NIC ? `(${b.NIC})` : ''}</td>
-                                <td>{b.type.replace('_', ' ')} <br /> <small style={{ color: '#3b82f6', fontWeight: 'bold' }}>{b.studentName ? `Visiting: ${b.studentName}` : ''}</small></td>
+                                <td>
+                                    {b.type.replace('_', ' ')} 
+                                    {b.type === 'student_visit' && (
+                                        <>
+                                            <br /> 
+                                            <small style={{ color: '#3b82f6', fontWeight: 'bold' }}>
+                                                Visiting: {b.studentName || 'Unknown Student'}
+                                            </small>
+                                        </>
+                                    )}
+                                </td>
                                 <td>{new Date(b.date).toLocaleDateString()} at {b.time}</td>
                                 <td>
                                     <span className={`badge ${b.status === 'approved' ? 'badge-green' : b.status === 'rejected' ? 'badge-red' : 'badge-yellow'}`}>

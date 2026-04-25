@@ -3,6 +3,11 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const dns = require('dns');
+
+// Force reliable DNS servers for MongoDB Atlas SRV resolution
+// (local ISP DNS may refuse SRV queries over TCP)
+dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
 
 const authRoutes = require('./routes/auth');
 const roomRoutes = require('./routes/room');

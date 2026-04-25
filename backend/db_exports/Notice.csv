@@ -1,3 +1,0 @@
-_id,message,type,active,createdAt,updatedAt,__v
-69c8fc73dc4d692ace911704,Electricity supply will be interrupt today,warning,false,Sun Mar 29 2026 15:48:27 GMT+0530 (India Standard Time),Sun Mar 29 2026 19:21:45 GMT+0530 (India Standard Time),0
-69c92e717d25c8e9625b77e7,Water supply interruption,warning,true,Sun Mar 29 2026 19:21:45 GMT+0530 (India Standard Time),Sun Mar 29 2026 19:21:45 GMT+0530 (India Standard Time),0
