@@ -74,16 +74,22 @@ const RoomsPanel = () => {
         fetchStudents();
     }, []);
 
-    const handleOccupancyChange = async (roomId, newOccupancy) => {
+    const handleRemoveStudent = async (roomId, studentId, studentName) => {
+        if (!window.confirm(`Are you sure you want to remove ${studentName} from Room ${rooms.find(r => r._id === roomId)?.roomNumber}?`)) return;
         try {
-            await axiosInstance.put(`/rooms/${roomId}/occupancy`, { occupied: parseInt(newOccupancy, 10) });
+            await axiosInstance.post('/rooms/remove', { studentId, roomId });
             fetchRooms();
+            fetchStudents();
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to update occupancy.');
+            alert(err.response?.data?.message || 'Failed to remove student');
         }
     };
 
-    const handleSaveEdit = async (id) => {
+    const handleSaveEdit = async (id, currentOccupancy) => {
+        if (parseInt(editCapacity, 10) < currentOccupancy) {
+            alert(`Cannot reduce capacity below current occupancy (${currentOccupancy}). Please remove students first.`);
+            return;
+        }
         try {
             await axiosInstance.put(`/rooms/${id}`, {
                 roomNumber: editRoomNumber,
@@ -133,11 +139,18 @@ const RoomsPanel = () => {
 
     const handleAddRoom = async (e) => {
         e.preventDefault();
+        
+        const cap = parseInt(capacity, 10);
+        if (cap > 3) {
+            alert('Maximum room capacity is 3.');
+            return;
+        }
+
         setLoadingAction(true);
         try {
             await axiosInstance.post('/rooms', {
                 roomNumber,
-                capacity: parseInt(capacity, 10),
+                capacity: cap,
                 type: roomType
             });
             setRoomNumber('');
@@ -175,7 +188,7 @@ const RoomsPanel = () => {
                                     </span>
                                 )}
                             </div>
-                            <input type="number" placeholder="Capacity" value={capacity} onChange={e => setCapacity(e.target.value)} required min="1" style={{ flex: 1, padding: '0.8rem 1rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', height: '100%' }} />
+                            <input type="number" placeholder="Capacity" value={capacity} onChange={e => setCapacity(e.target.value)} required min="1" max="3" style={{ flex: 1, padding: '0.8rem 1rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', height: '100%' }} />
                         </div>
                         <select value={roomType} onChange={e => setRoomType(e.target.value)} required style={{ width: '100%', padding: '0.8rem 1rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', background: 'white' }}>
                             <option value="Standard">Standard</option>
@@ -218,7 +231,7 @@ const RoomsPanel = () => {
                                         <option value="Premium">Premium</option>
                                     </select>
                                     <div style={{display:'flex', gap:'0.5rem', marginTop:'0.5rem'}}>
-                                        <button onClick={() => handleSaveEdit(room._id)} style={{flex:1, padding:'0.8rem', background:'#10b981', color:'white', border:'none', borderRadius:'8px', fontWeight:'bold', cursor:'pointer'}}>Save</button>
+                                        <button onClick={() => handleSaveEdit(room._id, currentOccupancy)} style={{flex:1, padding:'0.8rem', background:'#10b981', color:'white', border:'none', borderRadius:'8px', fontWeight:'bold', cursor:'pointer'}}>Save</button>
                                         <button onClick={() => setEditRoomId(null)} style={{flex:1, padding:'0.8rem', background:'#ef4444', color:'white', border:'none', borderRadius:'8px', fontWeight:'bold', cursor:'pointer'}}>Cancel</button>
                                     </div>
                                 </div>
@@ -248,22 +261,23 @@ const RoomsPanel = () => {
                                 <div style={{ height: '100%', width: `${percentFull}%`, background: barColor, transition: 'all 0.4s ease' }}></div>
                             </div>
 
-                            {/* Occupancy Dropdown */}
+                            {/* Explicit Student Management */}
                             <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '1.2rem' }}>
-                                <label style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '600', marginBottom: '0.6rem', display: 'block' }}>Set Occupancy Level:</label>
-                                <select 
-                                    value={currentOccupancy}
-                                    onChange={(e) => handleOccupancyChange(room._id, e.target.value)}
-                                    style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid #cbd5e1', outline: 'none', background: 'white', fontSize: '0.9rem', color: '#1e293b', cursor: 'pointer', marginBottom: '1rem' }}
-                                >
-                                    {Array.from({ length: room.capacity + 1 }, (_, i) => {
-                                        const left = room.capacity - i;
-                                        const label = i === room.capacity ? 'Occupied' : `Available (${left} slot${left !== 1 ? 's' : ''})`;
-                                        return <option key={i} value={i}>{label}</option>;
-                                    })}
-                                </select>
+                                <label style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '600', marginBottom: '0.6rem', display: 'block' }}>Assigned Students:</label>
+                                {students.filter(s => s.assignedRoomId === room._id).length > 0 ? (
+                                    <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        {students.filter(s => s.assignedRoomId === room._id).map(student => (
+                                            <li key={student._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
+                                                <span style={{ fontSize: '0.9rem', color: '#334155', fontWeight: '600' }}>{student.name}</span>
+                                                <button onClick={() => handleRemoveStudent(room._id, student._id, student.name)} style={{ background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '4px', padding: '0.4rem 0.6rem', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 'bold', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background='#fca5a5'} onMouseLeave={e => e.currentTarget.style.background='#fee2e2'}>Remove</button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <div style={{ padding: '0.8rem', background: 'white', borderRadius: '6px', border: '1px dashed #cbd5e1', color: '#94a3b8', fontSize: '0.85rem', textAlign: 'center', marginBottom: '1rem' }}>No students assigned yet</div>
+                                )}
 
-                                <label style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '600', marginBottom: '0.6rem', display: 'block' }}>Assign Student:</label>
+                                <label style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '600', marginBottom: '0.6rem', display: 'block' }}>Assign New Student:</label>
                                 <select
                                     value=""
                                     onChange={(e) => handleAssignStudent(room._id, e.target.value)}
@@ -271,7 +285,7 @@ const RoomsPanel = () => {
                                     style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid #cbd5e1', outline: 'none', background: isFull ? '#f1f5f9' : 'white', fontSize: '0.9rem', color: '#1e293b', cursor: isFull ? 'not-allowed' : 'pointer' }}
                                 >
                                     <option value="" disabled>{isFull ? 'Room is Full' : 'Select a student...'}</option>
-                                    {students.filter(s => s.status === 'active' && s.assignedRoom === 'Unassigned').map(s => (
+                                    {students.filter(s => s.status === 'active' && s.assignedRoom === 'Unassigned' && !s.assignedRoomId).map(s => (
                                         <option key={s._id} value={s._id}>
                                             {s.name} (Unassigned)
                                         </option>

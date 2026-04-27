@@ -6,6 +6,9 @@ const checkInSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
+    studentName: {
+        type: String
+    },
     checkInTime: {
         type: Date
     },

@@ -3,6 +3,7 @@ import axiosInstance from '../../api/axios';
 
 const StudentQRPanel = () => {
     const [qrImage, setQrImage] = useState('');
+    const [qrToken, setQrToken] = useState('');
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [timeLeft, setTimeLeft] = useState(45);
@@ -21,6 +22,7 @@ const StudentQRPanel = () => {
             try {
                 const res = await axiosInstance.get('/users/my-qr');
                 setQrImage(res.data.qrImage);
+                setQrToken(res.data.token);
             } catch (err) {
                 console.error("Failed to fetch secure QR", err);
             } finally {
@@ -95,6 +97,30 @@ const StudentQRPanel = () => {
                                 <span style={{ color: '#3b82f6', fontSize: '1.1rem', fontWeight: 'bold' }}>00:{timeLeft.toString().padStart(2, '0')}</span>
                             </div>
                         </div>
+
+                        {/* JWT Token for Testing */}
+                        {qrToken && (
+                            <div style={{ marginTop: '1.5rem', width: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase' }}>API Testing Token:</span>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <input 
+                                        type="text" 
+                                        readOnly 
+                                        value={qrToken} 
+                                        style={{ flex: 1, padding: '0.5rem', fontSize: '0.8rem', color: '#475569', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '6px', fontFamily: 'monospace' }} 
+                                    />
+                                    <button 
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(qrToken);
+                                            alert("Token copied to clipboard!");
+                                        }}
+                                        style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
+                                    >
+                                        Copy
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </>
                 ) : (
                     <div style={{ padding: '3rem 2rem', color: '#ef4444', textAlign: 'center', fontWeight: 'bold' }}>

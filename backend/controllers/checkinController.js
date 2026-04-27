@@ -78,6 +78,7 @@ exports.scanQR = async (req, res) => {
 
         const newCheckIn = await CheckIn.create({
             studentId,
+            studentName,
             checkInTime: now,
             date: today,
             isLate

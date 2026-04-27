@@ -14,7 +14,7 @@ const SummaryOverview = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const res = await axiosInstance.get('/dashboard');
+                const res = await axiosInstance.get(`/dashboard?t=${Date.now()}`);
                 setStats(res.data);
             } catch (err) {} 
             finally { setLoading(false); }

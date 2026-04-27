@@ -154,32 +154,47 @@ const Scanner = () => {
         initCamerasRef.current = true;
         
         try {
-            // Some browsers require a user gesture or a started stream to show labels
-            const devices = await Html5Qrcode.getCameras();
-            console.log("Detected cameras:", devices);
+            // Request permission to ensure all cameras, including external/bluetooth ones, are listed
+            let stream = null;
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            } catch (err) {
+                console.warn("Could not auto-request camera permission:", err);
+            }
             
-            if (devices && devices.length > 0) {
-                setCameras(devices);
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+
+            const mappedCameras = videoDevices.map((d, index) => ({
+                id: d.deviceId || `camera-${index}`,
+                label: d.label || `Unnamed Camera (${d.deviceId ? d.deviceId.substring(0, 8) : index})`
+            }));
+
+            console.log("Detected cameras:", mappedCameras);
+            
+            if (mappedCameras && mappedCameras.length > 0) {
+                setCameras(mappedCameras);
                 
                 // Only set active camera if not already set
                 if (!activeCameraId) {
-                    const backCamera = devices.find(d =>
+                    const backCamera = mappedCameras.find(d =>
                         d.label.toLowerCase().includes('back') ||
                         d.label.toLowerCase().includes('environment') ||
                         d.label.toLowerCase().includes('rear')
                     );
-                    setActiveCameraId(backCamera ? backCamera.id : devices[0].id);
+                    setActiveCameraId(backCamera ? backCamera.id : mappedCameras[0].id);
                 }
             } else if (requestPermission) {
-                // If no cameras found, try to trigger permission dialog by starting a dummy scanner
-                // This is a last resort to get the browser to reveal hardware
                 triggerOverlay('idle', 'Camera Access', 'Requesting hardware access...', '📸');
             } else {
-                console.error("No cameras detected by Html5Qrcode");
-                // Don't error out immediately, let the user try to refresh
+                console.error("No cameras detected by enumerateDevices");
             }
         } catch (err) {
-            console.error("Html5Qrcode.getCameras error:", err);
+            console.error("enumerateDevices error:", err);
             if (requestPermission) {
                 triggerOverlay('error', 'Camera Error', 'Please allow camera access in your browser settings.', '❌');
             }

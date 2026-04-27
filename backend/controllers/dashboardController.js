@@ -6,11 +6,19 @@ const Booking = require('../models/Booking');
 
 exports.getWardenOverview = async (req, res) => {
     try {
-        const totalStudents = await User.countDocuments({ role: 'student' });
-        const totalRooms = await Room.countDocuments();
-        const pendingComplaints = await Complaint.countDocuments({ status: 'pending' });
-        const pendingPayments = await Payment.countDocuments({ status: 'pending' });
-        const pendingBookings = await Booking.countDocuments({ status: 'pending' });
+        const [
+            totalStudents,
+            totalRooms,
+            pendingComplaints,
+            pendingPayments,
+            pendingBookings
+        ] = await Promise.all([
+            User.countDocuments({ role: 'student' }),
+            Room.countDocuments(),
+            Complaint.countDocuments({ status: 'pending' }),
+            Payment.countDocuments({ status: 'pending' }),
+            Booking.countDocuments({ status: 'pending' })
+        ]);
 
         res.status(200).json({
             totalStudents,

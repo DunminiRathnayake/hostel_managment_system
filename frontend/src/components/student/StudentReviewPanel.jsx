@@ -41,6 +41,7 @@ const StudentReviewPanel = () => {
             const method = existing ? 'put' : 'post';
             await axiosInstance[method]('/reviews', { rating, comment });
             setMessage(existing ? 'Review updated successfully!' : 'Review posted successfully!');
+            setComment('');
             setExisting(true);
         } catch (error) {
             setMessage(error.response?.data?.message || 'Failed to submit review');

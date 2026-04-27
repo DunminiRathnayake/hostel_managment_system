@@ -83,10 +83,13 @@ exports.allocateRoom = async (req, res) => {
 
         await newAllocation.save();
 
-        // Increase room occupancy
-        room.currentOccupancy += 1;
+        // Increase room occupancy safely based on actual active allocations
+        const activeAllocationsCount = await Allocation.countDocuments({ roomId, status: 'active' });
+        room.currentOccupancy = activeAllocationsCount;
         if (room.currentOccupancy >= room.capacity) {
             room.status = 'occupied';
+        } else {
+            room.status = 'available';
         }
         await room.save();
 
@@ -124,14 +127,15 @@ exports.removeStudent = async (req, res) => {
         allocation.status = 'left';
         await allocation.save();
 
-        // Decrease room occupancy safely
-        if (room.currentOccupancy > 0) {
-            room.currentOccupancy -= 1;
-            if (room.currentOccupancy < room.capacity && room.status === 'occupied') {
-                room.status = 'available';
-            }
-            await room.save();
+        // Sync room occupancy based on actual active allocations
+        const activeAllocationsCount = await Allocation.countDocuments({ roomId, status: 'active' });
+        room.currentOccupancy = activeAllocationsCount;
+        
+        if (room.currentOccupancy < room.capacity) {
+            room.status = 'available';
         }
+        
+        await room.save();
 
         res.status(200).json({ message: 'Student removed from room successfully', allocation });
     } catch (error) {
@@ -157,31 +161,7 @@ exports.updateRoomStatus = async (req, res) => {
     }
 };
 
-// @route   PUT /api/rooms/:id/occupancy
-// @desc    Update room occupancy
-// @access  Private/Warden
-exports.updateRoomOccupancy = async (req, res) => {
-    try {
-        const { occupied } = req.body;
-        const room = await Room.findById(req.params.id);
-        if (!room) {
-            return res.status(404).json({ message: 'Room not found' });
-        }
-        
-        if (occupied < 0 || occupied > room.capacity) {
-            return res.status(400).json({ message: 'Invalid occupancy count' });
-        }
-
-        room.currentOccupancy = occupied;
-        room.status = occupied >= room.capacity ? 'occupied' : 'available';
-
-        await room.save();
-        res.status(200).json({ message: 'Room occupancy updated', room });
-    } catch (error) {
-        console.error('Error updating room occupancy:', error);
-        res.status(500).json({ message: 'Server error' });
-    }
-};
+// updateRoomOccupancy function removed to enforce strict allocation counting
 
 // @route   PUT /api/rooms/:id
 // @desc    Update core room details
