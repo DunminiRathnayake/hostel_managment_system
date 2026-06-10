@@ -124,3 +124,41 @@
     .nav-auth-section { border-left: none; padding-left: 0; justify-content: center; width: 100%; }
     .navbar-links { flex-wrap: wrap; justify-content: center; }
 }
+
+/* Styling for Home/Landing Page Navbar Header */
+.navbar-landing-dark {
+    background: rgba(9, 9, 11, 0.45) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(16px);
+}
+
+.navbar-landing-dark .navbar-logo a {
+    color: #ffffff !important;
+}
+
+.navbar-landing-dark .navbar-links > a {
+    color: #cbd5e1 !important;
+}
+
+.navbar-landing-dark .navbar-links > a:hover,
+.navbar-landing-dark .navbar-links > a.nav-active {
+    color: #60a5fa !important; /* Premium light blue highlight for landing */
+}
+
+.navbar-landing-dark .navbar-links > a.nav-active {
+    border-bottom-color: #3b82f6 !important;
+}
+
+.navbar-landing-dark .nav-name {
+    color: #e2e8f0 !important;
+}
+
+.navbar-landing-dark .nav-profile-block {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.navbar-landing-dark .nav-auth-section {
+    border-left-color: rgba(255, 255, 255, 0.1) !important;
+}
+
