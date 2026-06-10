@@ -38,3 +38,24 @@
     outline: none;
     background: white;
 }
+
+/* Student-Specific Theme Adjustments */
+.student-sidebar button:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    transform: translateX(4px);
+}
+
+.student-sidebar button.active {
+    background: rgba(167, 139, 250, 0.15) !important;
+    color: #a78bfa !important;
+    border-left: 4px solid #8b5cf6 !important;
+    font-weight: 700 !important;
+}
+
+.student-mobile-brand {
+    background: linear-gradient(to right, #6366f1, #a78bfa) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+}
+

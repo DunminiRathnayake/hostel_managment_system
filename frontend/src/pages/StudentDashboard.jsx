@@ -15,10 +15,12 @@ import './StudentDashboard.css';
 const StudentDashboard = () => {
     const { logout, user } = useContext(AuthContext);
     const [activeTab, setActiveTab] = useState('dashboard');
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const navigate = useNavigate();
 
     const handleLogout = () => {
         logout();
+        setIsSidebarOpen(false);
         navigate('/');
     };
 
@@ -37,21 +39,32 @@ const StudentDashboard = () => {
     };
 
     return (
-        <div className="dashboard-container">
+        <div className={`dashboard-container ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+            {/* Sidebar Backdrop Overlay for Mobile */}
+            <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)}></div>
+
+            {/* Mobile Header */}
+            <header className="mobile-header">
+                <h2 className="mobile-brand-title student-mobile-brand">🏢 Staytra</h2>
+                <button className="menu-toggle-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)} aria-label="Toggle Menu">
+                    {isSidebarOpen ? '✕' : '☰'}
+                </button>
+            </header>
+
             <aside className="sidebar student-sidebar">
                 <div className="sidebar-header">
                     <h2>Student Dashboard</h2>
                     <p className="user-badge">{user?.name}</p>
                 </div>
                 <nav className="sidebar-nav">
-                    <button className={activeTab === 'dashboard' ? 'active' : ''} onClick={() => setActiveTab('dashboard')}>Dashboard</button>
-                    <button className={activeTab === 'room' ? 'active' : ''} onClick={() => setActiveTab('room')}>My Profile</button>
-                    <button className={activeTab === 'payments' ? 'active' : ''} onClick={() => setActiveTab('payments')}>Payments</button>
-                    <button className={activeTab === 'complaints' ? 'active' : ''} onClick={() => setActiveTab('complaints')}>Complaints</button>
-                    <button className={activeTab === 'cleaning' ? 'active' : ''} onClick={() => setActiveTab('cleaning')}>Cleaning</button>
-                    <button className={activeTab === 'qrcode' ? 'active' : ''} onClick={() => setActiveTab('qrcode')}>QR Code</button>
-                    <button className={activeTab === 'visitors' ? 'active' : ''} onClick={() => setActiveTab('visitors')}>Visitors</button>
-                    <button className={activeTab === 'rate' ? 'active' : ''} onClick={() => setActiveTab('rate')}>Rate Hostel</button>
+                    <button className={activeTab === 'dashboard' ? 'active' : ''} onClick={() => { setActiveTab('dashboard'); setIsSidebarOpen(false); }}>📊 Dashboard</button>
+                    <button className={activeTab === 'room' ? 'active' : ''} onClick={() => { setActiveTab('room'); setIsSidebarOpen(false); }}>👤 My Profile</button>
+                    <button className={activeTab === 'payments' ? 'active' : ''} onClick={() => { setActiveTab('payments'); setIsSidebarOpen(false); }}>💳 Payments</button>
+                    <button className={activeTab === 'complaints' ? 'active' : ''} onClick={() => { setActiveTab('complaints'); setIsSidebarOpen(false); }}>📢 Complaints</button>
+                    <button className={activeTab === 'cleaning' ? 'active' : ''} onClick={() => { setActiveTab('cleaning'); setIsSidebarOpen(false); }}>🧹 Cleaning</button>
+                    <button className={activeTab === 'qrcode' ? 'active' : ''} onClick={() => { setActiveTab('qrcode'); setIsSidebarOpen(false); }}>🤳 QR Code</button>
+                    <button className={activeTab === 'visitors' ? 'active' : ''} onClick={() => { setActiveTab('visitors'); setIsSidebarOpen(false); }}>👥 Visitors</button>
+                    <button className={activeTab === 'rate' ? 'active' : ''} onClick={() => { setActiveTab('rate'); setIsSidebarOpen(false); }}>⭐ Rate Hostel</button>
                 </nav>
                 <div className="sidebar-footer">
                     <button className="logout-btn" onClick={handleLogout}>Logout</button>

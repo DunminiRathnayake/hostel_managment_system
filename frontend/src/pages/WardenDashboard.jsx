@@ -16,10 +16,12 @@ import './WardenDashboard.css';
 const WardenDashboard = () => {
     const { logout, user } = useContext(AuthContext);
     const [activeTab, setActiveTab] = useState('overview');
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const navigate = useNavigate();
 
     const handleLogout = () => {
         logout();
+        setIsSidebarOpen(false);
         navigate('/');
     };
 
@@ -40,23 +42,34 @@ const WardenDashboard = () => {
     };
 
     return (
-        <div className="dashboard-container">
+        <div className={`dashboard-container ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+            {/* Sidebar Backdrop Overlay for Mobile */}
+            <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)}></div>
+
+            {/* Mobile Header */}
+            <header className="mobile-header">
+                <h2 className="mobile-brand-title">🏢 Staytra</h2>
+                <button className="menu-toggle-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)} aria-label="Toggle Menu">
+                    {isSidebarOpen ? '✕' : '☰'}
+                </button>
+            </header>
+
             <aside className="sidebar">
                 <div className="sidebar-header">
                     <h2>Warden Dashboard</h2>
                     <p className="user-badge">{user?.name} (Warden)</p>
                 </div>
                 <nav className="sidebar-nav">
-                    <button className={activeTab === 'overview' ? 'active' : ''} onClick={() => setActiveTab('overview')}>📊 Dashboard</button>
-                    <button className={activeTab === 'students' ? 'active' : ''} onClick={() => setActiveTab('students')}>👨‍🎓 Students</button>
-                    <button className={activeTab === 'rooms' ? 'active' : ''} onClick={() => setActiveTab('rooms')}>🏢 Rooms</button>
-                    <button className={activeTab === 'cleaning' ? 'active' : ''} onClick={() => setActiveTab('cleaning')}>🧹 Cleaning</button>
-                    <button className={activeTab === 'payments' ? 'active' : ''} onClick={() => setActiveTab('payments')}>💰 Payments</button>
-                    <button className={activeTab === 'complaints' ? 'active' : ''} onClick={() => setActiveTab('complaints')}>📢 Complaints</button>
-                    <button className={activeTab === 'bookings' ? 'active' : ''} onClick={() => setActiveTab('bookings')}>🎟️ Visitor Bookings</button>
-                    <button className={activeTab === 'checkins' ? 'active' : ''} onClick={() => setActiveTab('checkins')}>🤳 Check-ins</button>
-                    <button className={activeTab === 'gallery' ? 'active' : ''} onClick={() => setActiveTab('gallery')}>🖼️ Gallery Setup</button>
-                    <button className={activeTab === 'reviews' ? 'active' : ''} onClick={() => setActiveTab('reviews')}>⭐ Student Reviews</button>
+                    <button className={activeTab === 'overview' ? 'active' : ''} onClick={() => { setActiveTab('overview'); setIsSidebarOpen(false); }}>📊 Dashboard</button>
+                    <button className={activeTab === 'students' ? 'active' : ''} onClick={() => { setActiveTab('students'); setIsSidebarOpen(false); }}>👨‍🎓 Students</button>
+                    <button className={activeTab === 'rooms' ? 'active' : ''} onClick={() => { setActiveTab('rooms'); setIsSidebarOpen(false); }}>🏢 Rooms</button>
+                    <button className={activeTab === 'cleaning' ? 'active' : ''} onClick={() => { setActiveTab('cleaning'); setIsSidebarOpen(false); }}>🧹 Cleaning</button>
+                    <button className={activeTab === 'payments' ? 'active' : ''} onClick={() => { setActiveTab('payments'); setIsSidebarOpen(false); }}>💰 Payments</button>
+                    <button className={activeTab === 'complaints' ? 'active' : ''} onClick={() => { setActiveTab('complaints'); setIsSidebarOpen(false); }}>📢 Complaints</button>
+                    <button className={activeTab === 'bookings' ? 'active' : ''} onClick={() => { setActiveTab('bookings'); setIsSidebarOpen(false); }}>🎟️ Visitor Bookings</button>
+                    <button className={activeTab === 'checkins' ? 'active' : ''} onClick={() => { setActiveTab('checkins'); setIsSidebarOpen(false); }}>🤳 Check-ins</button>
+                    <button className={activeTab === 'gallery' ? 'active' : ''} onClick={() => { setActiveTab('gallery'); setIsSidebarOpen(false); }}>🖼️ Gallery Setup</button>
+                    <button className={activeTab === 'reviews' ? 'active' : ''} onClick={() => { setActiveTab('reviews'); setIsSidebarOpen(false); }}>⭐ Student Reviews</button>
                 </nav>
                 <div className="sidebar-footer">
                     <button className="logout-btn" onClick={handleLogout}>Logout</button>
