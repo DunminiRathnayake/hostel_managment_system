@@ -58,65 +58,6 @@ const Landing = () => {
                             <Link to="/login" className="btn-secondary hover-scale">Login</Link>
                         </div>
                     </div>
-                    
-                    <div className="hero-visual scroll-animate delay-4" style={{ position: 'relative' }}>
-                        
-                        {/* 🔔 Creative Floating "Hostel Material" Hover Badges */}
-                        <div className="glass-card float-animation" style={{ position: 'absolute', top: '-20px', right: '-30px', zIndex: 20, padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(59,130,246,0.3)', border: '1px solid rgba(59,130,246,0.5)', animationDelay: '0.5s', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)' }}>
-                            <span style={{ fontSize: '1.2rem' }}>✨</span>
-                            <div>
-                                <div style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cleaning Request</div>
-                                <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: '600' }}>Room 104 Pending</div>
-                            </div>
-                        </div>
-
-                        <div className="glass-card float-animation" style={{ position: 'absolute', bottom: '40px', left: '-40px', zIndex: 20, padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(16,185,129,0.3)', border: '1px solid rgba(16,185,129,0.5)', animationDelay: '1.5s', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)' }}>
-                            <span style={{ fontSize: '1.2rem' }}>📱</span>
-                            <div>
-                                <div style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#6ee7b7', textTransform: 'uppercase', letterSpacing: '0.05em' }}>QR Gate Check-In</div>
-                                <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: '600' }}>Student Verified</div>
-                            </div>
-                        </div>
-
-                        {/* Slow Float WebKit Animation Native */}
-                        <div className="glass-dashboard-mockup float-animation" style={{ position: 'relative', zIndex: 10 }}>
-                            <div className="glass-sidebar" style={{ gap: '1.2rem' }}>
-                                <div className="glass-dot-top" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>🏢</div>
-                                <div style={{ fontSize: '1.3rem', opacity: 0.7 }}>🛏️</div>
-                                <div style={{ fontSize: '1.3rem', opacity: 0.7 }}>💳</div>
-                                <div style={{ fontSize: '1.3rem', opacity: 0.7 }}>📢</div>
-                            </div>
-                            <div className="glass-main">
-                                <div className="glass-nav" style={{ justifyContent: 'space-between', padding: '0 1rem' }}>
-                                    <h3 style={{ margin: 0, fontSize: '1rem', color: '#fff', fontWeight: '600' }}>Hostel Overview</h3>
-                                    <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '0.7rem', background: 'rgba(59,130,246,0.2)', color: '#60a5fa', padding: '0.2rem 0.6rem', borderRadius: '999px', fontWeight: 'bold' }}>LIVE</span>
-                                        <div className="glass-avatar"></div>
-                                    </div>
-                                </div>
-                                
-                                <div className="glass-cards-row">
-                                    <div className="glass-stat-card" style={{ padding: '0.8rem 1rem' }}>
-                                        <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginBottom: '0.4rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Occupancy</div>
-                                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-                                            <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fff' }}>52 / 75</span>
-                                        </div>
-                                    </div>
-                                    <div className="glass-stat-card" style={{ padding: '0.8rem 1rem' }}>
-                                        <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginBottom: '0.4rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Available Beds</div>
-                                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-                                            <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#10b981' }}>23</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div className="glass-chart" style={{ position: 'relative' }}>
-                                    <div style={{ position: 'absolute', top: '1rem', left: '1rem', color: '#94a3b8', fontSize: '0.75rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>QR Gate Activity (Last 7 Days)</div>
-                                    {[40,70,50,90,60,80].map((h,i) => <div key={i} className="glass-bar" style={{height:`${h}%`}}></div>)}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </header>
 
                 {/* Features Section */}

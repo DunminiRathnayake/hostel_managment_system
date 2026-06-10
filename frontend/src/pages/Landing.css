@@ -82,7 +82,8 @@
 .hero-dark {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
+    text-align: center;
     padding: 8rem 5% 4rem;
     min-height: 85vh;
     gap: 2rem;
@@ -90,7 +91,10 @@
 
 .hero-text {
     flex: 1;
-    max-width: 600px;
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .hero-badge {
@@ -105,6 +109,7 @@
     margin-bottom: 1.5rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    width: fit-content;
 }
 
 .hero-title {
@@ -123,6 +128,7 @@
 .hero-actions {
     display: flex;
     gap: 1rem;
+    justify-content: center;
 }
 
 /* Dashboard Mockup (Visual) */
