@@ -1,8 +1,14 @@
-require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
+
+const envPath = fs.existsSync(path.join(__dirname, '.env')) 
+  ? path.join(__dirname, '.env') 
+  : path.join(__dirname, '../.env');
+
+require('dotenv').config({ path: envPath });
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const path = require('path');
 const dns = require('dns');
 
 // Force reliable DNS servers for MongoDB Atlas SRV resolution
