@@ -19,7 +19,7 @@ const Navbar = () => {
     };
 
     return (
-        <nav className={`navbar-container ${location.pathname === '/' ? 'navbar-landing-dark' : ''}`}>
+        <nav className={`navbar-container ${['/', '/login', '/register'].includes(location.pathname) ? 'navbar-landing-dark' : ''}`}>
             <div className="navbar-logo">
                 <Link to="/">
                     <span className="logo-icon">🏢</span> Staytra
